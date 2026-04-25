@@ -35,6 +35,7 @@ export default function Home() {
   const [devinSessionId, setDevinSessionId] = useState<string | null>(null);
   const [prUrl, setPrUrl] = useState<string | null>(null);
   const [implementingApiName, setImplementingApiName] = useState<string | null>(null);
+  const [devinError, setDevinError] = useState<string | null>(null);
 
   const handleSubmit = async (data: AnalyzeRequest) => {
     setResult(null);
@@ -44,6 +45,7 @@ export default function Home() {
     setDevinSessionId(null);
     setPrUrl(null);
     setImplementingApiName(null);
+    setDevinError(null);
 
     if (data.mode === "github") {
       setRepoUrl(data.input);
@@ -133,6 +135,7 @@ export default function Home() {
     if (!repoUrl || !result) return;
 
     setImplementingApiName(api.name);
+    setDevinError(null);
     setStage("generating");
 
     try {
@@ -151,28 +154,34 @@ export default function Home() {
       setDevinSessionId(sessionId);
 
       const poll = async () => {
-        const statusRes = await fetch("/api/devin/status", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId }),
-        });
-        const status = await statusRes.json();
+        try {
+          const statusRes = await fetch("/api/devin/status", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sessionId }),
+          });
+          const status = await statusRes.json();
 
-        if (status.status === "completed" && status.prUrl) {
-          setPrUrl(status.prUrl);
-          setStage("pr-done");
-          return;
-        } else if (status.status === "failed") {
-          throw new Error(status.message || "Devin session failed");
-        } else {
-          setTimeout(poll, 10000);
+          if (status.status === "completed") {
+            setPrUrl(status.prUrl ?? null);
+            setStage("pr-done");
+          } else if (status.status === "failed") {
+            setDevinError(status.message || "Devin session failed");
+            setStage("pr-failed");
+          } else {
+            setTimeout(poll, 10000);
+          }
+        } catch (pollErr) {
+          console.error("Devin poll error:", pollErr);
+          setDevinError(pollErr instanceof Error ? pollErr.message : "Failed to check session status");
+          setStage("pr-failed");
         }
       };
 
       setTimeout(poll, 10000);
     } catch (err) {
       console.error("Devin error:", err);
-      setError(err instanceof Error ? err.message : "Failed to generate integration");
+      setDevinError(err instanceof Error ? err.message : "Failed to generate integration");
       setStage("pr-failed");
     }
   };
@@ -211,7 +220,7 @@ export default function Home() {
             status={stage as "generating" | "pr-done" | "pr-failed"}
             apiName={implementingApiName}
             prUrl={prUrl ?? undefined}
-            errorMessage={stage === "pr-failed" ? error ?? undefined : undefined}
+            errorMessage={stage === "pr-failed" ? devinError ?? undefined : undefined}
           />
         )}
       </main>
