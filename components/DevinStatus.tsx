@@ -18,10 +18,15 @@ export default function DevinStatus({
       <div className="w-full max-w-2xl mx-auto mt-6 p-6 rounded-xl border border-blue-100 bg-blue-50">
         <div className="flex items-center gap-3">
           <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-blue-700">
-            Devin is forking your repo and generating integration code for{" "}
-            <span className="font-medium">{apiName}</span>...
-          </p>
+          <div>
+            <p className="text-sm text-blue-700">
+              Devin is forking your repo and integrating{" "}
+              <span className="font-medium">{apiName}</span>...
+            </p>
+            <p className="text-xs text-blue-500 mt-1">
+              A pull request will be created from the fork to your repository.
+            </p>
+          </div>
         </div>
       </div>
     );

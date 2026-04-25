@@ -62,7 +62,7 @@ api-scout/
 │       │   └── route.ts          # POST /api/fetch-repo — GitHub URL → key files
 │       └── devin/
 │           ├── trigger/
-│           │   └── route.ts      # POST /api/devin/trigger — Trigger Devin session
+│           │   └── route.ts      # POST /api/devin/trigger — Trigger Devin fork-based session
 │           └── status/
 │               └── route.ts      # POST /api/devin/status — Poll Devin session status
 ├── components/
@@ -217,7 +217,7 @@ Max 3 files. Never fetch the whole repo.
 ### POST `/api/devin/trigger`
 **Input:** `{ repoUrl: string, selectedAPI: ScoredAPI, intent: ExtractedIntent }`
 **Output:** `{ sessionId: string }`
-**What it does:** Triggers a Devin session that forks the user's public repo, generates full integration code for the selected API, and opens a PR from the fork to the user's repo.
+**What it does:** Parses the GitHub URL to extract `owner/repo`, builds a structured prompt via `buildDevinSessionPrompt()` (which now accepts `repoOwner` and `repoName`), and triggers a Devin session. The prompt explicitly instructs Devin to **fork** the repo under its own account, work in the fork, and open a **cross-repo pull request** back to the original repo. Devin never pushes directly to the user's repository.
 
 ### POST `/api/devin/status`
 **Input:** `{ sessionId: string }`
@@ -340,7 +340,7 @@ When in doubt, ask: *"Does this make the demo cleaner or more complex?"* If more
 6. Loading state shows pipeline steps: Analyzing → Searching → Scoring
 7. Top 3 cards appear with scores, reasoning, and a copy-able code snippet
 8. User clicks "Implement with Devin" on their preferred API *(GitHub mode only)*
-9. Devin forks the repo, generates integration code, and opens a PR
+9. Devin forks the repo under its own account, generates integration code in the fork, and opens a cross-repo PR back to the user's repo
 10. User sees the PR link and can review/merge on GitHub
 
 ---
