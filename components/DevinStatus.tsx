@@ -15,10 +15,10 @@ export default function DevinStatus({
 }: DevinStatusProps) {
   if (status === "generating") {
     return (
-      <div className="w-full max-w-2xl mx-auto mt-6 p-6 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
+      <div className="w-full max-w-2xl mx-auto mt-6 p-6 rounded-xl border border-blue-100 bg-blue-50">
         <div className="flex items-center gap-3">
           <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-blue-700 dark:text-blue-300">
+          <p className="text-sm text-blue-700">
             Devin is forking your repo and generating integration code for{" "}
             <span className="font-medium">{apiName}</span>...
           </p>
@@ -29,8 +29,8 @@ export default function DevinStatus({
 
   if (status === "pr-done") {
     return (
-      <div className="w-full max-w-2xl mx-auto mt-6 p-6 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20">
-        <p className="text-sm text-emerald-700 dark:text-emerald-300 mb-3">
+      <div className="w-full max-w-2xl mx-auto mt-6 p-6 rounded-xl border border-emerald-100 bg-emerald-50">
+        <p className="text-sm text-emerald-700 mb-3">
           Devin created a pull request for{" "}
           <span className="font-medium">{apiName}</span>!
         </p>
@@ -65,8 +65,8 @@ export default function DevinStatus({
 
   if (status === "pr-failed") {
     return (
-      <div className="w-full max-w-2xl mx-auto mt-6 p-6 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
-        <p className="text-sm text-red-700 dark:text-red-300">
+      <div className="w-full max-w-2xl mx-auto mt-6 p-6 rounded-xl border border-red-100 bg-red-50">
+        <p className="text-sm text-red-700">
           {errorMessage || "Failed to generate integration. Please try again."}
         </p>
       </div>
