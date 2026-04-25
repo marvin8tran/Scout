@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAnthropic } from "@/lib/anthropic";
+import { getGeminiModel } from "@/lib/gemini";
 import { INTENT_EXTRACTION_PROMPT } from "@/lib/prompts";
 import type { InputMode, PriorityMode } from "@/types";
 
@@ -12,20 +12,13 @@ export async function POST(request: Request) {
       priority: PriorityMode;
     };
 
-    const response = await getAnthropic().messages.create({
-      model: "claude-sonnet-4-5",
-      max_tokens: 1024,
-      system: INTENT_EXTRACTION_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: `Mode: ${mode}\nPriority: ${priority}\n\nUser's code/repo context:\n${input}\n\nUser's API request:\n${chatMessage}`,
-        },
-      ],
-    });
+    const model = getGeminiModel(INTENT_EXTRACTION_PROMPT);
 
-    const text =
-      response.content[0].type === "text" ? response.content[0].text : "";
+    const result = await model.generateContent(
+      `Mode: ${mode}\nPriority: ${priority}\n\nUser's code/repo context:\n${input}\n\nUser's API request:\n${chatMessage}`
+    );
+
+    const text = result.response.text();
     const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
 
     return NextResponse.json(parsed);
