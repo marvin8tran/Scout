@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import type { ScoredAPI, PriorityMode } from "@/types";
-import { useTypewriter } from "@/hooks/useTypewriter";
 
 const PRIORITY_SCORE_KEY: Record<PriorityMode, keyof ScoredAPI["scores"]> = {
   scalability: "scalability",
@@ -21,11 +20,11 @@ interface ExpandedApiViewProps {
   showImplementButton?: boolean;
 }
 
-const SCORE_LABELS: { key: keyof ScoredAPI["scores"]; label: string }[] = [
-  { key: "compatibility", label: "Compatibility" },
-  { key: "price", label: "Price" },
-  { key: "scalability", label: "Scalability" },
-  { key: "maintenance", label: "Maintenance" },
+const SCORE_LABELS: { key: keyof ScoredAPI["scores"]; label: string; color: string }[] = [
+  { key: "compatibility", label: "Compatibility", color: "bg-indigo-400" },
+  { key: "price", label: "Price", color: "bg-emerald-400" },
+  { key: "scalability", label: "Scalability", color: "bg-violet-400" },
+  { key: "maintenance", label: "Maintenance", color: "bg-rose-400" },
 ];
 
 export default function ExpandedApiView({
@@ -38,7 +37,6 @@ export default function ExpandedApiView({
   showImplementButton,
 }: ExpandedApiViewProps) {
   const [copied, setCopied] = useState(false);
-  const { displayedText, isComplete } = useTypewriter(api.snippet, 18);
 
   const handleCopy = async () => {
     try {
@@ -61,7 +59,7 @@ export default function ExpandedApiView({
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2 }}
         onClick={onBack}
-        className="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 transition-colors mb-6 dark:text-zinc-400 dark:hover:text-zinc-100"
+        className="flex items-center gap-2 text-sm text-indigo-500 hover:text-indigo-700 transition-colors mb-6 font-medium"
       >
         <svg
           className="w-4 h-4"
@@ -87,23 +85,23 @@ export default function ExpandedApiView({
         className="flex items-start justify-between mb-8"
       >
         <div>
-          <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h2 className="text-3xl font-bold text-gray-900">
             {api.name}
           </h2>
           <a
             href={api.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-zinc-400 hover:text-blue-600 hover:underline transition-colors dark:text-zinc-500 dark:hover:text-blue-400"
+            className="text-sm text-indigo-400 hover:text-indigo-600 hover:underline transition-colors"
           >
             {api.url}
           </a>
         </div>
         <div className="text-right">
-          <div className="text-4xl font-bold text-zinc-900 dark:text-zinc-100">
+          <div className="text-4xl font-bold text-gray-900">
             {api.final_score.toFixed(1)}
           </div>
-          <div className="text-sm text-zinc-400 dark:text-zinc-500">
+          <div className="text-sm text-gray-500 font-medium">
             Overall Score
           </div>
         </div>
@@ -116,23 +114,23 @@ export default function ExpandedApiView({
         transition={{ delay: 0.15 }}
         className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8"
       >
-        {SCORE_LABELS.map(({ key, label }) => (
+        {SCORE_LABELS.map(({ key, label, color }) => (
           <div key={key} className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-zinc-500 dark:text-zinc-400">{label}</span>
-              <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+              <span className="text-gray-600">{label}</span>
+              <span className="font-semibold text-gray-800">
                 {api.scores[key]}/10
               </span>
             </div>
-            <div className="h-2.5 bg-zinc-100 rounded-full overflow-hidden dark:bg-zinc-800">
+            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${api.scores[key] * 10}%` }}
                 transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
                 className={`h-full rounded-full ${
                   priority && PRIORITY_SCORE_KEY[priority] === key
-                    ? "bg-blue-600"
-                    : "bg-zinc-400 dark:bg-zinc-500"
+                    ? color
+                    : "bg-gray-300"
                 }`}
               />
             </div>
@@ -145,7 +143,7 @@ export default function ExpandedApiView({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="text-zinc-600 mb-4 dark:text-zinc-400"
+        className="text-gray-700 mb-4 leading-relaxed"
       >
         {api.winner_reason}
       </motion.p>
@@ -155,12 +153,12 @@ export default function ExpandedApiView({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25 }}
-        className="flex items-start gap-2 px-4 py-3 rounded-lg bg-amber-50 border border-amber-100 mb-8 dark:bg-amber-950/30 dark:border-amber-900/50"
+        className="flex items-start gap-2 px-4 py-3 rounded-xl bg-amber-50/80 border border-amber-200 mb-8"
       >
-        <span className="text-amber-600 text-sm font-medium shrink-0 mt-0.5 dark:text-amber-400">
+        <span className="text-amber-600 text-sm font-semibold shrink-0 mt-0.5">
           Tradeoff:
         </span>
-        <p className="text-sm text-amber-700 dark:text-amber-300">
+        <p className="text-sm text-amber-800 leading-relaxed">
           {api.tradeoff}
         </p>
       </motion.div>
@@ -170,42 +168,34 @@ export default function ExpandedApiView({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className={`relative rounded-xl overflow-hidden transition-shadow duration-500 ${
-          !isComplete
-            ? "shadow-[0_0_30px_rgba(16,185,129,0.15)]"
-            : "shadow-lg"
-        }`}
+        className="relative rounded-2xl overflow-hidden border border-indigo-200 shadow-sm"
       >
-        <div className="flex items-center justify-between px-4 py-2 bg-zinc-800 dark:bg-zinc-850">
-          <span className="text-xs text-zinc-400">Integration Code</span>
+        <div className="flex items-center justify-between px-5 py-3 bg-indigo-50 border-b border-indigo-200">
+          <span className="text-sm text-indigo-600 font-medium">Integration Code</span>
           <button
             onClick={handleCopy}
-            className="px-3 py-1 text-xs rounded-md bg-zinc-700 text-zinc-300 hover:bg-zinc-600 transition-colors"
+            className="px-3 py-1.5 text-xs rounded-lg bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors font-medium"
           >
             {copied ? "Copied!" : "Copy"}
           </button>
         </div>
-        <pre className="p-6 bg-zinc-950 text-emerald-400 text-sm overflow-x-auto font-mono leading-relaxed">
-          <code>
-            {displayedText}
-            {!isComplete && (
-              <span className="cursor-blink inline-block w-2 h-4 bg-emerald-400 ml-0.5 align-middle" />
-            )}
-          </code>
+        <pre className="p-6 bg-white text-gray-800 text-sm overflow-x-auto font-mono leading-relaxed">
+          <code>{api.snippet}</code>
         </pre>
       </motion.div>
 
       {/* Implement with Devin */}
-      {isComplete && showImplementButton && onImplement && (
+      {showImplementButton && onImplement && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
           className="mt-6"
         >
           <button
             onClick={() => onImplement(api)}
             disabled={isAnyImplementing}
-            className="w-full px-4 py-3 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full px-4 py-3 rounded-xl bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isImplementing ? (
               <>
