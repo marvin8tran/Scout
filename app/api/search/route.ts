@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     for (const query of intent.search_queries) {
       const response = await getExa().searchAndContents(query, {
         numResults: 5,
-        text: { maxCharacters: 800 },
+        text: { maxCharacters: 2000 },
       });
 
       for (const result of response.results) {
@@ -32,11 +32,48 @@ export async function POST(request: Request) {
           docs_url: result.url,
           description: result.text?.slice(0, 200) || "",
           raw_excerpt: result.text || "",
+          pricing_excerpt: "",
         });
       }
     }
 
     const candidates = allResults.slice(0, 8);
+
+    // Second pass: targeted pricing queries for each candidate
+    const exa = getExa();
+    for (const candidate of candidates) {
+      const pricingQuery = `${candidate.name} API pricing plans free tier cost per request`;
+      const rateLimitQuery = `${candidate.name} API rate limits requests per second`;
+
+      const [pricingRes, rateLimitRes] = await Promise.all([
+        exa
+          .searchAndContents(pricingQuery, {
+            numResults: 2,
+            text: { maxCharacters: 2000 },
+          })
+          .catch(() => null),
+        exa
+          .searchAndContents(rateLimitQuery, {
+            numResults: 2,
+            text: { maxCharacters: 2000 },
+          })
+          .catch(() => null),
+      ]);
+
+      const excerpts: string[] = [];
+      if (pricingRes) {
+        for (const r of pricingRes.results) {
+          if (r.text) excerpts.push(r.text);
+        }
+      }
+      if (rateLimitRes) {
+        for (const r of rateLimitRes.results) {
+          if (r.text) excerpts.push(r.text);
+        }
+      }
+
+      candidate.pricing_excerpt = excerpts.join("\n\n---\n\n");
+    }
 
     return NextResponse.json(candidates);
   } catch (error) {

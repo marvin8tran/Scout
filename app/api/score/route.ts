@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const candidatesText = candidates
       .map(
         (c, i) =>
-          `${i + 1}. ${c.name}\n   URL: ${c.url}\n   Description: ${c.description}\n   Excerpt: ${c.raw_excerpt}`
+          `${i + 1}. ${c.name}\n   URL: ${c.url}\n   Description: ${c.description}\n   Excerpt: ${c.raw_excerpt}\n   Pricing Info: ${c.pricing_excerpt || "Not found"}`
       )
       .join("\n\n");
 

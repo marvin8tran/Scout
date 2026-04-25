@@ -137,6 +137,16 @@ export interface APICandidate {
   docs_url: string;
   description: string;
   raw_excerpt: string;    // doc text Exa returned
+  pricing_excerpt: string; // text from pricing/docs page (second-pass Exa query)
+}
+
+export interface PricingDetails {
+  free_tier: string | null;         // e.g. "1,000 requests/month free"
+  paid_starting_price: string | null; // e.g. "$0.01 per request" or "$25/month"
+  rate_limit: string | null;        // e.g. "100 requests/second"
+  monthly_capacity: string | null;  // e.g. "1M requests/month on Pro plan"
+  last_updated: string | null;      // e.g. "2025-03-15" or "March 2025"
+  data_source: string | null;       // URL where the data was found
 }
 
 export interface ScoredAPI {
@@ -153,6 +163,7 @@ export interface ScoredAPI {
   winner_reason: string;
   tradeoff: string;
   snippet: string;          // ready-to-paste code in user's language
+  pricing_details: PricingDetails; // extracted empirical pricing numbers
 }
 
 export interface ScoutResult {
@@ -294,7 +305,8 @@ Return ONLY a valid JSON array of the top 3, sorted by final_score descending:
 
 ### Exa API calls
 - Use `client.searchAndContents()` not `client.search()`
-- Always request `{ text: { maxCharacters: 800 } }` to limit token bleed
+- Use `{ text: { maxCharacters: 2000 } }` for both initial and pricing-specific queries
+- After the initial search pass, run a second targeted pass per candidate for pricing/rate-limit data
 - Deduplicate results by domain before returning
 
 ### GitHub fetching
