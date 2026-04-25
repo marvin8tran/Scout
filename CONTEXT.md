@@ -33,7 +33,7 @@ Each result includes:
 | Framework | **Next.js 14+ (App Router)** |
 | Language | **TypeScript (strict mode)** |
 | Styling | **Tailwind CSS** |
-| AI | **Anthropic Claude API** (`claude-sonnet-4-5`) via `@anthropic-ai/sdk` |
+| AI | **Google Gemini API** (`gemini-2.0-flash`) via `@google/generative-ai` |
 | Search | **Exa API** for semantic API discovery |
 | GitHub fetching | **GitHub raw content API** (no auth, public repos only) |
 | Deployment | **Vercel** |
@@ -53,11 +53,11 @@ api-scout/
 │   ├── globals.css
 │   └── api/
 │       ├── analyze/
-│       │   └── route.ts          # POST /api/analyze — Claude intent extraction
+│       │   └── route.ts          # POST /api/analyze — Gemini intent extraction
 │       ├── search/
 │       │   └── route.ts          # POST /api/search — Exa API discovery
 │       ├── score/
-│       │   └── route.ts          # POST /api/score — Claude scoring + snippet gen
+│       │   └── route.ts          # POST /api/score — Gemini scoring + snippet gen
 │       └── fetch-repo/
 │           └── route.ts          # POST /api/fetch-repo — GitHub URL → key files
 ├── components/
@@ -65,7 +65,7 @@ api-scout/
 │   ├── ResultCard.tsx            # Single API result card
 │   └── ResultsList.tsx           # Top 3 results layout
 ├── lib/
-│   ├── anthropic.ts              # Anthropic client singleton
+│   ├── gemini.ts                 # Gemini client singleton
 │   ├── exa.ts                    # Exa client singleton
 │   ├── github.ts                 # GitHub fetch helpers
 │   └── prompts.ts                # ALL system prompts live here
@@ -82,7 +82,7 @@ api-scout/
 Never share actual key values here. Keys are stored in `.env.local` (gitignored).
 
 Required variables:
-- `ANTHROPIC_API_KEY` — from console.anthropic.com
+- `GEMINI_API_KEY` — from aistudio.google.com/apikey
 - `EXA_API_KEY` — from exa.ai/api
 
 When adding a new env variable:
@@ -159,7 +159,7 @@ export interface ScoutResult {
 ### POST `/api/analyze`
 **Input:** `{ input: string, chatMessage: string, mode: InputMode, priority: PriorityMode }`
 **Output:** `ExtractedIntent`
-**What it does:** Sends the user's code context and chat message to Claude with the intent extraction system prompt. Returns structured JSON describing what they need.
+**What it does:** Sends the user's code context and chat message to Gemini with the intent extraction system prompt. Returns structured JSON describing what they need.
 
 ### POST `/api/search`
 **Input:** `ExtractedIntent`
@@ -169,7 +169,7 @@ export interface ScoutResult {
 ### POST `/api/score`
 **Input:** `{ candidates: APICandidate[], intent: ExtractedIntent, priority: PriorityMode }`
 **Output:** `ScoredAPI[]` (top 3)
-**What it does:** Sends candidates + intent to Claude with the scoring system prompt. Claude scores each on 4 dimensions and generates a code snippet. Returns top 3.
+**What it does:** Sends candidates + intent to Gemini with the scoring system prompt. Gemini scores each on 4 dimensions and generates a code snippet. Returns top 3.
 
 ### POST `/api/fetch-repo` *(GitHub mode only)*
 **Input:** `{ url: string }`
@@ -254,10 +254,10 @@ Return ONLY a valid JSON array of the top 3, sorted by final_score descending:
 - Log the raw error to console before returning
 - Never silently swallow errors
 
-### Claude API calls
-- Always use `claude-sonnet-4-5` — do not change this model
-- Always set `max_tokens: 1024` for extraction, `max_tokens: 2048` for scoring
-- Always parse response with: `response.content[0].type === "text" ? response.content[0].text : ""`
+### Gemini API calls
+- Always use `gemini-2.0-flash` — do not change this model
+- Pass system prompts via `systemInstruction` in `getGeminiModel()`
+- Parse response with: `result.response.text()`
 - Strip markdown fences before JSON.parse: `.replace(/```json|```/g, "").trim()`
 
 ### Exa API calls

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAnthropic } from "@/lib/anthropic";
+import { getGeminiModel } from "@/lib/gemini";
 import { buildScoringPrompt } from "@/lib/prompts";
 import type { APICandidate, ExtractedIntent, PriorityMode, ScoredAPI } from "@/types";
 
@@ -26,21 +26,13 @@ export async function POST(request: Request) {
       candidates: candidatesText,
     });
 
-    const response = await getAnthropic().messages.create({
-      model: "claude-sonnet-4-5",
-      max_tokens: 2048,
-      system: scoringPrompt,
-      messages: [
-        {
-          role: "user",
-          content:
-            "Score the candidates above and return the top 3 as a JSON array.",
-        },
-      ],
-    });
+    const model = getGeminiModel(scoringPrompt);
 
-    const text =
-      response.content[0].type === "text" ? response.content[0].text : "";
+    const result = await model.generateContent(
+      "Score the candidates above and return the top 3 as a JSON array."
+    );
+
+    const text = result.response.text();
     const parsed: ScoredAPI[] = JSON.parse(
       text.replace(/```json|```/g, "").trim()
     );
