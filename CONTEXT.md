@@ -58,15 +58,22 @@ api-scout/
 │       │   └── route.ts          # POST /api/search — Exa API discovery
 │       ├── score/
 │       │   └── route.ts          # POST /api/score — Gemini scoring + snippet gen
-│       └── fetch-repo/
-│           └── route.ts          # POST /api/fetch-repo — GitHub URL → key files
+│       ├── fetch-repo/
+│       │   └── route.ts          # POST /api/fetch-repo — GitHub URL → key files
+│       └── devin/
+│           ├── trigger/
+│           │   └── route.ts      # POST /api/devin/trigger — Trigger Devin session
+│           └── status/
+│               └── route.ts      # POST /api/devin/status — Poll Devin session status
 ├── components/
 │   ├── InputPanel.tsx            # Chat-style input: source selection + chat message + priority pills
 │   ├── ResultCard.tsx            # Single API result card
-│   └── ResultsList.tsx           # Top 3 results layout
+│   ├── ResultsList.tsx           # Top 3 results layout
+│   └── DevinStatus.tsx           # Devin integration progress & PR result
 ├── lib/
 │   ├── gemini.ts                 # Gemini client singleton
 │   ├── exa.ts                    # Exa client singleton
+│   ├── devin.ts                  # Devin API client singleton
 │   ├── github.ts                 # GitHub fetch helpers
 │   └── prompts.ts                # ALL system prompts live here
 ├── types/
@@ -84,6 +91,8 @@ Never share actual key values here. Keys are stored in `.env.local` (gitignored)
 Required variables:
 - `GEMINI_API_KEY` — from aistudio.google.com/apikey
 - `EXA_API_KEY` — from exa.ai/api
+- `DEVIN_API_KEY` — from Devin API (service user credential)
+- `DEVIN_ORG_ID` — your Devin organization ID
 
 When adding a new env variable:
 1. Add it to `.env.local` manually (never ask AI to do this)
@@ -150,6 +159,19 @@ export interface ScoutResult {
   intent: ExtractedIntent;
   recommendations: ScoredAPI[];  // always top 3, sorted by final_score
 }
+
+export interface DevinTriggerRequest {
+  repoUrl: string;              // user's public GitHub repo URL
+  selectedAPI: ScoredAPI;       // the API they chose to implement
+  intent: ExtractedIntent;      // the extracted intent from the analyze step
+}
+
+export interface DevinSessionStatus {
+  sessionId: string;
+  status: "pending" | "running" | "completed" | "failed";
+  message?: string;
+  prUrl?: string;               // populated when Devin creates the PR from fork
+}
 ```
 
 ---
@@ -180,6 +202,16 @@ export interface ScoutResult {
 - `index.ts` / `main.py` / `app.ts` / `server.js` (whichever exists)
 
 Max 3 files. Never fetch the whole repo.
+
+### POST `/api/devin/trigger`
+**Input:** `{ repoUrl: string, selectedAPI: ScoredAPI, intent: ExtractedIntent }`
+**Output:** `{ sessionId: string }`
+**What it does:** Triggers a Devin session that forks the user's public repo, generates full integration code for the selected API, and opens a PR from the fork to the user's repo.
+
+### POST `/api/devin/status`
+**Input:** `{ sessionId: string }`
+**Output:** `DevinSessionStatus`
+**What it does:** Polls the Devin API for session progress. Returns status and PR URL when complete.
 
 ---
 
@@ -295,7 +327,9 @@ When in doubt, ask: *"Does this make the demo cleaner or more complex?"* If more
 5. They hit the send button (or press Enter)
 6. Loading state shows pipeline steps: Analyzing → Searching → Scoring
 7. Top 3 cards appear with scores, reasoning, and a copy-able code snippet
-8. Done. Under 15 seconds end to end.
+8. User clicks "Implement with Devin" on their preferred API *(GitHub mode only)*
+9. Devin forks the repo, generates integration code, and opens a PR
+10. User sees the PR link and can review/merge on GitHub
 
 ---
 
