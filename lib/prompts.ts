@@ -29,6 +29,8 @@ At least 1 of the search_queries MUST target pricing pages or rate limit documen
 
 export function buildDevinSessionPrompt(params: {
   repoUrl: string;
+  repoOwner: string;
+  repoName: string;
   apiName: string;
   apiDocsUrl: string;
   apiSnippet: string;
@@ -37,31 +39,59 @@ export function buildDevinSessionPrompt(params: {
   framework: string | null;
   task: string;
 }): string {
+  const branchName = `scout/integrate-${params.apiName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+
   return `You are integrating the ${params.apiName} API into a ${params.language}${params.framework ? ` / ${params.framework}` : ''} project.
 
-Repository: ${params.repoUrl}
+IMPORTANT: You do NOT have write access to the original repository. You MUST fork it first and work entirely in your fork. Do NOT attempt to clone or push to ${params.repoUrl} directly.
 
-Steps:
-1. Fork this repository
-2. Clone your fork
-3. Analyze the project structure to understand where integration code should go
-4. Install the ${params.apiName} SDK/package using the project's package manager
-5. Create the integration:
+## Step-by-step instructions (follow exactly):
+
+### Phase 1: Fork the repository
+1. Fork the repository ${params.repoUrl} to your own GitHub account using the GitHub API or CLI:
+   \`gh repo fork ${params.repoOwner}/${params.repoName} --clone\`
+   This creates a fork under YOUR account and clones it locally.
+2. Verify you are working in YOUR fork, not the original repo.
+3. Create a new branch named: ${branchName}
+   \`git checkout -b ${branchName}\`
+
+### Phase 2: Implement the integration
+4. Analyze the project structure to understand where integration code should go
+5. Install the ${params.apiName} SDK/package using the project's package manager
+6. Create the integration:
    - A service/client module for ${params.apiName}
    - Type definitions if using TypeScript
    - Example usage showing: ${params.task}
-   - Error handling and environment variable setup
-6. Reference snippet for the first API call:
+   - Error handling and environment variable setup (.env.example)
+7. Reference snippet for the first API call:
 \`\`\`
 ${params.apiSnippet}
 \`\`\`
-7. API documentation: ${params.apiDocsUrl}
-8. Commit to branch: scout/integrate-${params.apiName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}
-9. Push and open a PR from your fork to the original repo
-10. PR title: "Scout: Integrate ${params.apiName} for ${params.task}"
-11. PR description should explain what was added, why ${params.apiName} was chosen (${params.apiWinnerReason}), and any setup instructions (env vars, install commands)
+8. API documentation: ${params.apiDocsUrl}
 
-Do NOT merge the PR. Just create it and return the PR URL.`;
+### Phase 3: Commit and push to YOUR FORK
+9. Stage and commit all changes to branch ${branchName}
+10. Push the branch to YOUR FORK (origin), NOT to the upstream repo:
+    \`git push origin ${branchName}\`
+
+### Phase 4: Create a cross-repo pull request
+11. Create a pull request FROM your fork TO the original repository:
+    - Base repo: ${params.repoOwner}/${params.repoName} (branch: main)
+    - Head repo: YOUR_USERNAME/${params.repoName} (branch: ${branchName})
+    - Use: \`gh pr create --repo ${params.repoOwner}/${params.repoName} --head YOUR_USERNAME:${branchName} --base main --title "Scout: Integrate ${params.apiName} for ${params.task}" --body "..."\`
+12. PR title: "Scout: Integrate ${params.apiName} for ${params.task}"
+13. PR description should explain:
+    - What was added
+    - Why ${params.apiName} was chosen (${params.apiWinnerReason})
+    - Setup instructions (env vars needed, install commands)
+
+Do NOT merge the PR. Just create it and return the PR URL.
+
+CRITICAL REMINDERS:
+- NEVER push to ${params.repoOwner}/${params.repoName} directly
+- ALL work happens in YOUR fork
+- The PR must be a cross-repo PR from your fork to the original repo
+- If forking fails, report the error — do NOT try alternative approaches that push directly`;
 }
 
 export function buildScoringPrompt(params: {

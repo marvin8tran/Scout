@@ -23,8 +23,14 @@ export async function triggerDevinSession(
   const apiKey = getApiKey();
   const orgId = getOrgId();
 
+  const repoMatch = request.repoUrl.match(/github\.com\/([\w.-]+)\/([\w.-]+)/);
+  const repoOwner = repoMatch?.[1] ?? '';
+  const repoName = repoMatch?.[2] ?? '';
+
   const prompt = buildDevinSessionPrompt({
     repoUrl: request.repoUrl,
+    repoOwner,
+    repoName,
     apiName: request.selectedAPI.name,
     apiDocsUrl: request.selectedAPI.docs_url,
     apiSnippet: request.selectedAPI.snippet,
@@ -112,6 +118,7 @@ export async function getSessionStatus(
     return {
       sessionId,
       status: "running",
+      message: data.status_detail || "Devin is working...",
     };
   }
 
