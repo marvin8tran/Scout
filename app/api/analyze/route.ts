@@ -5,8 +5,9 @@ import type { InputMode, PriorityMode } from "@/types";
 
 export async function POST(request: Request) {
   try {
-    const { input, mode, priority } = (await request.json()) as {
+    const { input, chatMessage, mode, priority } = (await request.json()) as {
       input: string;
+      chatMessage: string;
       mode: InputMode;
       priority: PriorityMode;
     };
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: `Mode: ${mode}\nPriority: ${priority}\n\nInput:\n${input}`,
+          content: `Mode: ${mode}\nPriority: ${priority}\n\nUser's code/repo context:\n${input}\n\nUser's API request:\n${chatMessage}`,
         },
       ],
     });

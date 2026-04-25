@@ -1,11 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import type { ScoredAPI } from "@/types";
+import type { ScoredAPI, PriorityMode } from "@/types";
+
+const PRIORITY_SCORE_KEY: Record<PriorityMode, keyof ScoredAPI["scores"]> = {
+  scalability: "scalability",
+  cheapest: "price",
+  maintenance: "maintenance",
+};
 
 interface ResultCardProps {
   api: ScoredAPI;
   rank: number;
+  priority?: PriorityMode;
 }
 
 const SCORE_LABELS: { key: keyof ScoredAPI["scores"]; label: string }[] = [
@@ -15,7 +22,7 @@ const SCORE_LABELS: { key: keyof ScoredAPI["scores"]; label: string }[] = [
   { key: "maintenance", label: "Maintenance" },
 ];
 
-export default function ResultCard({ api, rank }: ResultCardProps) {
+export default function ResultCard({ api, rank, priority }: ResultCardProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -72,7 +79,11 @@ export default function ResultCard({ api, rank }: ResultCardProps) {
             </div>
             <div className="h-1.5 bg-zinc-100 dark:bg-zinc-700 rounded-full overflow-hidden">
               <div
-                className="h-full bg-blue-500 rounded-full transition-all"
+                className={`h-full rounded-full transition-all ${
+                  priority && PRIORITY_SCORE_KEY[priority] === key
+                    ? "bg-emerald-500"
+                    : "bg-blue-500"
+                }`}
                 style={{ width: `${api.scores[key] * 10}%` }}
               />
             </div>

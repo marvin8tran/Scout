@@ -8,10 +8,9 @@
 
 **API Scout** is a public web tool that helps developers (and AI coding agents) discover, compare, and integrate the best third-party public APIs for their use case.
 
-Users input one of three things:
-1. **A GitHub repo URL** — we fetch key files (README, package.json/requirements.txt, entry points) and analyze their stack
-2. **A code snippet** — they paste a function or file directly
-3. **A plain English description** — "I want an API that handles payments like Stripe"
+Users provide two things:
+1. **Source context** — either a **GitHub repo URL** (we fetch key files) or a **code snippet** (pasted directly)
+2. **A chat message** — a natural language description of what API they need, optionally mentioning their priority preference (Scalability, Cheapest Price, or Maintenance)
 
 We return the **top 3 API recommendations** scored on four dimensions:
 - ✅ **Compatibility** — works with their detected stack/language
@@ -62,7 +61,7 @@ api-scout/
 │       └── fetch-repo/
 │           └── route.ts          # POST /api/fetch-repo — GitHub URL → key files
 ├── components/
-│   ├── InputPanel.tsx            # Mode toggle + input area
+│   ├── InputPanel.tsx            # Chat-style input: source selection + chat message + priority pills
 │   ├── ResultCard.tsx            # Single API result card
 │   └── ResultsList.tsx           # Top 3 results layout
 ├── lib/
@@ -98,11 +97,12 @@ If an API call fails, check the key exists before debugging logic.
 ```typescript
 // types/index.ts
 
-export type InputMode = "github" | "snippet" | "description";
-export type PriorityMode = "docs" | "scale";
+export type InputMode = "github" | "snippet";
+export type PriorityMode = "scalability" | "cheapest" | "maintenance";
 
 export interface AnalyzeRequest {
-  input: string;          // raw code, GitHub URL, or description
+  input: string;          // code snippet or GitHub URL content
+  chatMessage: string;    // user's chat message describing desired API + priority
   mode: InputMode;
   priority: PriorityMode;
 }
@@ -157,9 +157,9 @@ export interface ScoutResult {
 ## 🤖 The Three API Routes
 
 ### POST `/api/analyze`
-**Input:** `{ input: string, mode: InputMode, priority: PriorityMode }`
+**Input:** `{ input: string, chatMessage: string, mode: InputMode, priority: PriorityMode }`
 **Output:** `ExtractedIntent`
-**What it does:** Sends the user's code/description to Claude with the intent extraction system prompt. Returns structured JSON describing what they need.
+**What it does:** Sends the user's code context and chat message to Claude with the intent extraction system prompt. Returns structured JSON describing what they need.
 
 ### POST `/api/search`
 **Input:** `ExtractedIntent`
@@ -224,7 +224,7 @@ Score each API 1–10 on:
 - scalability: rate limits, uptime SLA, enterprise tier availability
 - maintenance: last updated, community activity, deprecation risk
 
-Priority "{priority}" means weight {priority === "docs" ? "compatibility (40%) and price (30%)" : "scalability (40%) and price (30%)"} most heavily.
+Priority "{priority}" means weight {priority === "scalability" ? "scalability (40%) and compatibility (30%)" : priority === "cheapest" ? "price (50%) and compatibility (25%)" : "maintenance (40%) and compatibility (30%)"} most heavily.
 
 Return ONLY a valid JSON array of the top 3, sorted by final_score descending:
 [{
@@ -288,13 +288,14 @@ When in doubt, ask: *"Does this make the demo cleaner or more complex?"* If more
 
 ## 🎯 Demo Flow (what judges will see)
 
-1. User lands on page — clean input with 3 mode tabs
-2. They paste: `https://github.com/some/repo` 
-3. They select priority: **"Best for scale"**
-4. They hit **Scout APIs**
-5. Loading state shows pipeline steps: Analyzing → Searching → Scoring
-6. Top 3 cards appear with scores, reasoning, and a copy-able code snippet
-7. Done. Under 15 seconds end to end.
+1. User lands on page — picks **Code Snippet** or **GitHub Link**
+2. They provide their code/link in the source input
+3. They type a chat message describing the API they need, e.g. "I need a cheap payment API"
+4. Priority auto-detects from keywords (or they click a pill to select)
+5. They hit the send button (or press Enter)
+6. Loading state shows pipeline steps: Analyzing → Searching → Scoring
+7. Top 3 cards appear with scores, reasoning, and a copy-able code snippet
+8. Done. Under 15 seconds end to end.
 
 ---
 

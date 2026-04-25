@@ -24,10 +24,12 @@ export default function Home() {
   const [stage, setStage] = useState<Stage>("idle");
   const [result, setResult] = useState<ScoutResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activePriority, setActivePriority] = useState<AnalyzeRequest["priority"]>("scalability");
 
   const handleSubmit = async (data: AnalyzeRequest) => {
     setResult(null);
     setError(null);
+    setActivePriority(data.priority);
 
     try {
       let inputText = data.input;
@@ -54,6 +56,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           input: inputText,
+          chatMessage: data.chatMessage,
           mode: data.mode,
           priority: data.priority,
         }),
@@ -125,7 +128,7 @@ export default function Home() {
           isLoading={stage !== "idle" && stage !== "done" && stage !== "error"}
         />
 
-        <ResultsList result={result} stage={stage} error={error} />
+        <ResultsList result={result} stage={stage} error={error} priority={activePriority} />
       </main>
     </div>
   );
