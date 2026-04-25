@@ -110,6 +110,7 @@ export default function ResultsList({ result, stage, error, priority, onImplemen
             priority={priority}
             onImplement={onImplement}
             isImplementing={api.name === implementingApiName}
+            isAnyImplementing={implementingApiName != null}
             showImplementButton={showImplementButton}
           />
         ))}

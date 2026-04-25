@@ -15,6 +15,7 @@ interface ResultCardProps {
   priority?: PriorityMode;
   onImplement?: (api: ScoredAPI) => void;
   isImplementing?: boolean;
+  isAnyImplementing?: boolean;
   showImplementButton?: boolean;
 }
 
@@ -25,7 +26,7 @@ const SCORE_LABELS: { key: keyof ScoredAPI["scores"]; label: string }[] = [
   { key: "maintenance", label: "Maintenance" },
 ];
 
-export default function ResultCard({ api, rank, priority, onImplement, isImplementing, showImplementButton }: ResultCardProps) {
+export default function ResultCard({ api, rank, priority, onImplement, isImplementing, isAnyImplementing, showImplementButton }: ResultCardProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -125,7 +126,7 @@ export default function ResultCard({ api, rank, priority, onImplement, isImpleme
       {showImplementButton && onImplement && (
         <button
           onClick={() => onImplement(api)}
-          disabled={isImplementing}
+          disabled={isAnyImplementing}
           className="w-full px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isImplementing ? (

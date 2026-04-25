@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import InputPanel from "@/components/InputPanel";
 import ResultsList from "@/components/ResultsList";
 import DevinStatus from "@/components/DevinStatus";
@@ -36,6 +36,7 @@ export default function Home() {
   const [prUrl, setPrUrl] = useState<string | null>(null);
   const [implementingApiName, setImplementingApiName] = useState<string | null>(null);
   const [devinError, setDevinError] = useState<string | null>(null);
+  const pollGenerationRef = useRef(0);
 
   const handleSubmit = async (data: AnalyzeRequest) => {
     setResult(null);
@@ -46,6 +47,7 @@ export default function Home() {
     setPrUrl(null);
     setImplementingApiName(null);
     setDevinError(null);
+    pollGenerationRef.current += 1;
 
     if (data.mode === "github") {
       setRepoUrl(data.input);
@@ -137,6 +139,7 @@ export default function Home() {
     setImplementingApiName(api.name);
     setDevinError(null);
     setStage("generating");
+    const generation = ++pollGenerationRef.current;
 
     try {
       const triggerRes = await fetch("/api/devin/trigger", {
@@ -154,6 +157,7 @@ export default function Home() {
       setDevinSessionId(sessionId);
 
       const poll = async () => {
+        if (pollGenerationRef.current !== generation) return;
         try {
           const statusRes = await fetch("/api/devin/status", {
             method: "POST",
@@ -161,6 +165,12 @@ export default function Home() {
             body: JSON.stringify({ sessionId }),
           });
           const status = await statusRes.json();
+
+          if (!statusRes.ok) {
+            throw new Error(status.error || "Failed to check session status");
+          }
+
+          if (pollGenerationRef.current !== generation) return;
 
           if (status.status === "completed") {
             setPrUrl(status.prUrl ?? null);
@@ -172,6 +182,7 @@ export default function Home() {
             setTimeout(poll, 10000);
           }
         } catch (pollErr) {
+          if (pollGenerationRef.current !== generation) return;
           console.error("Devin poll error:", pollErr);
           setDevinError(pollErr instanceof Error ? pollErr.message : "Failed to check session status");
           setStage("pr-failed");
