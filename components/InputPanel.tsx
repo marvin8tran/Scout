@@ -32,7 +32,6 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
   const [input, setInput] = useState("");
   const [chatMessage, setChatMessage] = useState("");
   const [details, setDetails] = useState("");
-  const [showDetails, setShowDetails] = useState(false);
   const [priority, setPriority] = useState<PriorityMode>("scalability");
   const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
@@ -106,29 +105,18 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
           <span className="whitespace-nowrap">API</span>
         </div>
 
-        {/* More Details Toggle */}
+        {/* More Details */}
         <div className="mt-6">
-          <button
-            onClick={() => setShowDetails(!showDetails)}
-            className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-indigo-500 transition-colors"
-          >
-            <svg className={`w-4 h-4 transition-transform ${showDetails ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-            </svg>
-            {showDetails ? "Hide details" : "Add more details"}
-          </button>
-
-          {showDetails && (
-            <div className="mt-3 max-w-lg mx-auto">
-              <textarea
-                value={details}
-                onChange={(e) => handleDetailsChange(e.target.value)}
-                placeholder="e.g. I need something scalable and well-maintained, price is not a concern. Must support webhooks."
-                rows={3}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 text-sm resize-none transition-all"
-              />
-            </div>
-          )}
+          <p className="text-sm text-gray-500 mb-2">Add more details</p>
+          <div className="max-w-lg mx-auto">
+            <textarea
+              value={details}
+              onChange={(e) => handleDetailsChange(e.target.value)}
+              placeholder="e.g. I need something scalable and well-maintained, price is not a concern. Must support webhooks."
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 text-sm resize-none transition-all"
+            />
+          </div>
         </div>
 
         {/* Submit button */}
