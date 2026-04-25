@@ -112,7 +112,7 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
                   handleSubmit();
                 }
               }}
-              placeholder="Describe the API you need and mention your priority: Scalability, Cheapest Price, or Maintenance..."
+              placeholder="Describe the API you need"
               rows={2}
               className="w-full pl-4 pr-12 py-3 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
             />
