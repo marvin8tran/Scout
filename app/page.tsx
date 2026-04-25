@@ -68,21 +68,6 @@ const STEPS = [
   },
 ];
 
-function ScoutLogo({ className }: { className?: string }) {
-  return (
-    <span className={className}>
-      Sc
-      <span className="relative inline-block">
-        <svg className="w-[0.85em] h-[0.85em] inline-block -mt-1" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="17" cy="17" r="12" stroke="currentColor" strokeWidth="3.5" fill="none" />
-          <line x1="26" y1="26" x2="36" y2="36" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
-        </svg>
-      </span>
-      ut
-    </span>
-  );
-}
-
 export default function Home() {
   const [stage, setStage] = useState<Stage>("idle");
   const [result, setResult] = useState<ScoutResult | null>(null);
@@ -273,7 +258,7 @@ export default function Home() {
         <section className="w-full max-w-4xl mx-auto pt-20 sm:pt-28 pb-16">
           <div className="text-center mb-12">
             <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-gray-900 mb-3">
-              <ScoutLogo />
+              Scout
             </h1>
             <p className="text-gray-400 text-lg font-light">
               Find the perfect API for your project
