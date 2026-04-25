@@ -23,16 +23,12 @@ const SCORE_LABELS: { key: keyof ScoredAPI["scores"]; label: string; color: stri
   { key: "maintenance", label: "Maintenance", color: "bg-rose-400" },
 ];
 
-const RANK_COLORS = [
-  "bg-indigo-100 text-indigo-700 border-indigo-200",
-  "bg-violet-100 text-violet-700 border-violet-200",
-  "bg-rose-100 text-rose-700 border-rose-200",
-];
-
-const CARD_ACCENTS = [
-  "border-indigo-200 hover:border-indigo-300 hover:shadow-indigo-100/50",
-  "border-violet-200 hover:border-violet-300 hover:shadow-violet-100/50",
-  "border-rose-200 hover:border-rose-300 hover:shadow-rose-100/50",
+const PRICING_FIELDS: { key: keyof ScoredAPI["pricing_details"]; label: string; icon: string }[] = [
+  { key: "free_tier", label: "Free Tier", icon: "🆓" },
+  { key: "paid_starting_price", label: "Starting Price", icon: "💰" },
+  { key: "rate_limit", label: "Rate Limit", icon: "⚡" },
+  { key: "monthly_capacity", label: "Monthly Capacity", icon: "📊" },
+  { key: "last_updated", label: "Last Updated", icon: "🕐" },
 ];
 
 export default function ApiOverviewCard({
@@ -41,19 +37,17 @@ export default function ApiOverviewCard({
   priority,
   onSelect,
 }: ApiOverviewCardProps) {
-  const accentIndex = Math.min(rank - 1, CARD_ACCENTS.length - 1);
-
   return (
     <motion.div
       layoutId={api.name}
-      className={`rounded-2xl border-2 bg-white p-7 space-y-5 cursor-pointer hover:shadow-lg transition-all ${CARD_ACCENTS[accentIndex]}`}
+      className="rounded-2xl border-2 border-indigo-200 bg-white p-7 space-y-5 cursor-pointer hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-100/50 transition-all"
       onClick={() => onSelect(api)}
       whileHover={{ y: -3 }}
     >
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <span className={`flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold border ${RANK_COLORS[accentIndex]}`}>
+          <span className="flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold border bg-indigo-100 text-indigo-700 border-indigo-200">
             {rank}
           </span>
           <div>
@@ -79,6 +73,32 @@ export default function ApiOverviewCard({
         </div>
       </div>
 
+      {/* Key Numbers */}
+      {api.pricing_details && (
+        <div className="grid grid-cols-2 gap-2">
+          {PRICING_FIELDS.map(({ key, label, icon }) => {
+            const value = api.pricing_details[key];
+            if (!value) return null;
+            return (
+              <div
+                key={key}
+                className="flex items-start gap-2 px-3 py-2 rounded-lg bg-indigo-50/60 border border-indigo-100"
+              >
+                <span className="text-sm shrink-0">{icon}</span>
+                <div className="min-w-0">
+                  <div className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">
+                    {label}
+                  </div>
+                  <div className="text-xs font-semibold text-gray-800 truncate">
+                    {value}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Score Breakdown */}
       <div className="grid grid-cols-2 gap-3">
         {SCORE_LABELS.map(({ key, label, color }) => (
@@ -103,7 +123,7 @@ export default function ApiOverviewCard({
         ))}
       </div>
 
-      {/* Winner Reason - full text, not clamped */}
+      {/* Winner Reason */}
       <p className="text-sm text-gray-700 leading-relaxed">
         {api.winner_reason}
       </p>
@@ -120,13 +140,7 @@ export default function ApiOverviewCard({
 
       {/* CTA */}
       <button
-        className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-          rank === 1
-            ? "bg-indigo-500 text-white hover:bg-indigo-600"
-            : rank === 2
-              ? "bg-violet-500 text-white hover:bg-violet-600"
-              : "bg-rose-500 text-white hover:bg-rose-600"
-        }`}
+        className="w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-all bg-indigo-500 text-white hover:bg-indigo-600"
         onClick={(e) => {
           e.stopPropagation();
           onSelect(api);

@@ -81,6 +81,7 @@ export default function Home() {
   const [stage, setStage] = useState<Stage>("idle");
   const [error, setError] = useState<string | null>(null);
   const pollGenerationRef = useRef(0);
+  const loadingRef = useRef<HTMLDivElement>(null);
 
   const getStageIndex = (s: Stage): number => {
     const order = ["fetching", "analyzing", "searching", "scoring", "done"];
@@ -92,6 +93,11 @@ export default function Home() {
     pollGenerationRef.current += 1;
 
     const repoUrl = data.mode === "github" ? data.input : null;
+
+    // Auto-scroll to loading indicator after a short delay
+    setTimeout(() => {
+      loadingRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 150);
 
     try {
       let inputText = data.input;
@@ -221,7 +227,7 @@ export default function Home() {
 
         {/* Loading Indicator */}
         {isLoading && (
-          <section className="w-full max-w-xl mx-auto mt-4 mb-16">
+          <section ref={loadingRef} className="w-full max-w-xl mx-auto mt-4 mb-16">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-indigo-100 p-8 shadow-sm">
               {/* Spinner */}
               <div className="flex justify-center mb-6">
