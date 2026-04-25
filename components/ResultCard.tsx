@@ -95,6 +95,52 @@ export default function ResultCard({ api, rank, priority, onImplement, isImpleme
         ))}
       </div>
 
+      {/* Empirical Data */}
+      {api.pricing_details && (
+        <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700">
+          <h4 className="col-span-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide mb-1">
+            Key Numbers
+          </h4>
+          {api.pricing_details.free_tier && (
+            <div className="text-xs">
+              <span className="text-zinc-500">Free Tier:</span>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">{api.pricing_details.free_tier}</p>
+            </div>
+          )}
+          {api.pricing_details.paid_starting_price && (
+            <div className="text-xs">
+              <span className="text-zinc-500">Starting Price:</span>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">{api.pricing_details.paid_starting_price}</p>
+            </div>
+          )}
+          {api.pricing_details.rate_limit && (
+            <div className="text-xs">
+              <span className="text-zinc-500">Rate Limit:</span>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">{api.pricing_details.rate_limit}</p>
+            </div>
+          )}
+          {api.pricing_details.monthly_capacity && (
+            <div className="text-xs">
+              <span className="text-zinc-500">Capacity:</span>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">{api.pricing_details.monthly_capacity}</p>
+            </div>
+          )}
+          {api.pricing_details.last_updated && (
+            <div className="text-xs">
+              <span className="text-zinc-500">Last Updated:</span>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">{api.pricing_details.last_updated}</p>
+            </div>
+          )}
+          {api.pricing_details.data_source && (
+            <div className="col-span-2 text-xs">
+              <a href={api.pricing_details.data_source} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                Source
+              </a>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Winner Reason */}
       <p className="text-sm text-gray-600">
         {api.winner_reason}

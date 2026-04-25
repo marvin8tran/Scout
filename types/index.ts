@@ -29,6 +29,16 @@ export interface APICandidate {
   docs_url: string;
   description: string;
   raw_excerpt: string;
+  pricing_excerpt: string;
+}
+
+export interface PricingDetails {
+  free_tier: string | null;
+  paid_starting_price: string | null;
+  rate_limit: string | null;
+  monthly_capacity: string | null;
+  last_updated: string | null;
+  data_source: string | null;
 }
 
 export interface ScoredAPI {
@@ -45,6 +55,7 @@ export interface ScoredAPI {
   winner_reason: string;
   tradeoff: string;
   snippet: string;
+  pricing_details: PricingDetails;
 }
 
 export interface ScoutResult {
