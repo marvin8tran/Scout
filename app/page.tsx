@@ -1,16 +1,13 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import InputPanel from "@/components/InputPanel";
-import ResultsList from "@/components/ResultsList";
-import DevinStatus from "@/components/DevinStatus";
 import type {
   AnalyzeRequest,
   ExtractedIntent,
   APICandidate,
   ScoredAPI,
-  ScoutResult,
-  InputMode,
 } from "@/types";
 
 type Stage =
@@ -20,10 +17,21 @@ type Stage =
   | "searching"
   | "scoring"
   | "done"
-  | "generating"
-  | "pr-done"
-  | "pr-failed"
   | "error";
+
+const PIPELINE_STEPS = [
+  { key: "fetching", label: "Fetching", color: "bg-indigo-400" },
+  { key: "analyzing", label: "Analyzing", color: "bg-violet-400" },
+  { key: "searching", label: "Searching", color: "bg-rose-400" },
+  { key: "scoring", label: "Scoring", color: "bg-amber-400" },
+] as const;
+
+const STAGE_MESSAGES: Record<string, string> = {
+  fetching: "Fetching repository files...",
+  analyzing: "Analyzing your code and requirements...",
+  searching: "Searching for the best API candidates...",
+  scoring: "Scoring and ranking your top matches...",
+};
 
 const STEPS = [
   {
@@ -69,34 +77,21 @@ const STEPS = [
 ];
 
 export default function Home() {
+  const router = useRouter();
   const [stage, setStage] = useState<Stage>("idle");
-  const [result, setResult] = useState<ScoutResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [activePriority, setActivePriority] = useState<AnalyzeRequest["priority"]>("scalability");
-  const [repoUrl, setRepoUrl] = useState<string | null>(null);
-  const [inputMode, setInputMode] = useState<InputMode | null>(null);
-  const [devinSessionId, setDevinSessionId] = useState<string | null>(null);
-  const [prUrl, setPrUrl] = useState<string | null>(null);
-  const [implementingApiName, setImplementingApiName] = useState<string | null>(null);
-  const [devinError, setDevinError] = useState<string | null>(null);
   const pollGenerationRef = useRef(0);
 
+  const getStageIndex = (s: Stage): number => {
+    const order = ["fetching", "analyzing", "searching", "scoring", "done"];
+    return order.indexOf(s);
+  };
+
   const handleSubmit = async (data: AnalyzeRequest) => {
-    setResult(null);
     setError(null);
-    setActivePriority(data.priority);
-    setInputMode(data.mode);
-    setDevinSessionId(null);
-    setPrUrl(null);
-    setImplementingApiName(null);
-    setDevinError(null);
     pollGenerationRef.current += 1;
 
-    if (data.mode === "github") {
-      setRepoUrl(data.input);
-    } else {
-      setRepoUrl(null);
-    }
+    const repoUrl = data.mode === "github" ? data.input : null;
 
     try {
       let inputText = data.input;
@@ -163,8 +158,18 @@ export default function Home() {
             "Failed to score APIs"
         );
 
-      setResult({ intent, recommendations: scored });
+      // Store result and navigate to results page
+      sessionStorage.setItem(
+        "scout_result",
+        JSON.stringify({
+          result: { intent, recommendations: scored },
+          priority: data.priority,
+          inputMode: data.mode,
+          repoUrl,
+        })
+      );
       setStage("done");
+      router.push("/results");
     } catch (err) {
       console.error("Pipeline error:", err);
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -172,94 +177,26 @@ export default function Home() {
     }
   };
 
-  const handleImplement = async (api: ScoredAPI) => {
-    if (!repoUrl || !result) return;
-
-    setImplementingApiName(api.name);
-    setDevinError(null);
-    setStage("generating");
-    const generation = ++pollGenerationRef.current;
-
-    try {
-      const triggerRes = await fetch("/api/devin/trigger", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          repoUrl,
-          selectedAPI: api,
-          intent: result.intent,
-        }),
-      });
-      const triggerData = await triggerRes.json();
-      if (!triggerRes.ok) throw new Error(triggerData.error || "Failed to trigger Devin session");
-      const { sessionId } = triggerData;
-      setDevinSessionId(sessionId);
-
-      const poll = async () => {
-        if (pollGenerationRef.current !== generation) return;
-        try {
-          const statusRes = await fetch("/api/devin/status", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sessionId }),
-          });
-          const status = await statusRes.json();
-
-          if (!statusRes.ok) {
-            throw new Error(status.error || "Failed to check session status");
-          }
-
-          if (pollGenerationRef.current !== generation) return;
-
-          if (status.status === "completed") {
-            setPrUrl(status.prUrl ?? null);
-            setStage("pr-done");
-          } else if (status.status === "failed") {
-            setDevinError(status.message || "Devin session failed");
-            setStage("pr-failed");
-          } else {
-            setTimeout(poll, 10000);
-          }
-        } catch (pollErr) {
-          if (pollGenerationRef.current !== generation) return;
-          console.error("Devin poll error:", pollErr);
-          setDevinError(pollErr instanceof Error ? pollErr.message : "Failed to check session status");
-          setStage("pr-failed");
-        }
-      };
-
-      setTimeout(poll, 10000);
-    } catch (err) {
-      console.error("Devin error:", err);
-      setDevinError(err instanceof Error ? err.message : "Failed to generate integration");
-      setStage("pr-failed");
-    }
-  };
-
-  // Suppress unused variable warnings for state used by Devin integration polling
-  void devinSessionId;
+  const isLoading = stage !== "idle" && stage !== "done" && stage !== "error";
 
   return (
     <div className="flex flex-col min-h-screen bg-white relative overflow-hidden">
       {/* Decorative side elements */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden" aria-hidden="true">
-        {/* Left side decorations */}
         <div className="absolute top-32 -left-6 w-48 h-48 rounded-full bg-indigo-50 opacity-60" />
         <div className="absolute top-72 left-12 w-24 h-24 rounded-full bg-violet-50 opacity-50" />
-        <div className="absolute top-[420px] -left-4 w-32 h-32 rounded-full bg-blue-50 opacity-40" />
+        <div className="absolute top-[420px] -left-4 w-32 h-32 rounded-full bg-rose-50 opacity-40" />
         <div className="absolute top-20 left-20 w-3 h-3 rounded-full bg-indigo-200 opacity-80" />
         <div className="absolute top-48 left-8 w-2 h-2 rounded-full bg-violet-300 opacity-60" />
-        <div className="absolute top-96 left-28 w-2.5 h-2.5 rounded-full bg-blue-200 opacity-70" />
+        <div className="absolute top-96 left-28 w-2.5 h-2.5 rounded-full bg-rose-200 opacity-70" />
 
-        {/* Right side decorations */}
         <div className="absolute top-20 -right-8 w-56 h-56 rounded-full bg-violet-50 opacity-50" />
         <div className="absolute top-80 right-16 w-28 h-28 rounded-full bg-indigo-50 opacity-40" />
-        <div className="absolute top-[500px] -right-4 w-36 h-36 rounded-full bg-purple-50 opacity-40" />
+        <div className="absolute top-[500px] -right-4 w-36 h-36 rounded-full bg-rose-50 opacity-40" />
         <div className="absolute top-36 right-24 w-3 h-3 rounded-full bg-violet-200 opacity-70" />
         <div className="absolute top-64 right-10 w-2 h-2 rounded-full bg-indigo-300 opacity-60" />
-        <div className="absolute top-[450px] right-32 w-2.5 h-2.5 rounded-full bg-purple-200 opacity-70" />
+        <div className="absolute top-[450px] right-32 w-2.5 h-2.5 rounded-full bg-rose-200 opacity-70" />
 
-        {/* Subtle gradient lines */}
         <div className="absolute top-40 left-0 w-16 h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent opacity-40" />
         <div className="absolute top-60 right-0 w-20 h-px bg-gradient-to-l from-transparent via-violet-200 to-transparent opacity-40" />
       </div>
@@ -271,60 +208,106 @@ export default function Home() {
             <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-gray-900 mb-3">
               Scout
             </h1>
-            <p className="text-gray-400 text-lg font-light">
+            <p className="text-gray-500 text-lg font-light">
               Find the perfect API for your project
             </p>
           </div>
 
           <InputPanel
             onSubmit={handleSubmit}
-            isLoading={stage !== "idle" && stage !== "done" && stage !== "error" && stage !== "pr-done" && stage !== "pr-failed"}
+            isLoading={isLoading}
           />
         </section>
 
-        {/* Results */}
-        <ResultsList
-          result={result}
-          stage={stage}
-          error={error}
-          priority={activePriority}
-          onImplement={handleImplement}
-          implementingApiName={implementingApiName}
-          showImplementButton={inputMode === "github"}
-        />
+        {/* Loading Indicator */}
+        {isLoading && (
+          <section className="w-full max-w-xl mx-auto mt-4 mb-16">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-indigo-100 p-8 shadow-sm">
+              {/* Spinner */}
+              <div className="flex justify-center mb-6">
+                <div className="w-10 h-10 rounded-full border-3 border-indigo-200 border-t-indigo-500 animate-spin" />
+              </div>
 
-        {(stage === "generating" || stage === "pr-done" || stage === "pr-failed") && implementingApiName && (
-          <DevinStatus
-            status={stage as "generating" | "pr-done" | "pr-failed"}
-            apiName={implementingApiName}
-            prUrl={prUrl ?? undefined}
-            errorMessage={stage === "pr-failed" ? devinError ?? undefined : undefined}
-          />
+              {/* Status message */}
+              <p className="text-center text-base font-medium text-gray-800 mb-6">
+                {STAGE_MESSAGES[stage] || "Processing..."}
+              </p>
+
+              {/* Progress bar */}
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-4">
+                <div
+                  className="h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-indigo-400 via-violet-400 to-rose-400"
+                  style={{ width: `${((getStageIndex(stage) + 1) / 4) * 100}%` }}
+                />
+              </div>
+
+              {/* Step indicators */}
+              <div className="flex justify-between">
+                {PIPELINE_STEPS.map((step, i) => {
+                  const currentIndex = getStageIndex(stage);
+                  const isActive = step.key === stage;
+                  const isCompleted = currentIndex > i;
+
+                  return (
+                    <div key={step.key} className="flex flex-col items-center gap-1.5">
+                      <div
+                        className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                          isActive
+                            ? `${step.color} animate-pulse shadow-sm`
+                            : isCompleted
+                              ? `${step.color} opacity-80`
+                              : "bg-gray-200"
+                        }`}
+                      />
+                      <span
+                        className={`text-xs font-medium transition-colors ${
+                          isActive
+                            ? "text-gray-800"
+                            : isCompleted
+                              ? "text-gray-600"
+                              : "text-gray-400"
+                        }`}
+                      >
+                        {step.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="w-full max-w-2xl mx-auto mt-8 p-4 rounded-xl bg-red-50 border border-red-200">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
         )}
 
         {/* How It Works Section */}
-        {stage === "idle" && !result && (
+        {stage === "idle" && (
           <section className="w-full max-w-4xl mx-auto py-20 border-t border-gray-100">
             <h2 className="text-center text-2xl font-semibold text-gray-900 mb-2">
               How it works
             </h2>
-            <p className="text-center text-gray-400 text-sm mb-12">
+            <p className="text-center text-gray-500 text-sm mb-12">
               From idea to integration in four simple steps
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {STEPS.map((step) => (
                 <div key={step.number} className="text-center group">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-50 text-indigo-400 mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-50 text-indigo-500 mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-all">
                     {step.icon}
                   </div>
-                  <div className="text-xs font-semibold text-indigo-300 uppercase tracking-widest mb-1">
+                  <div className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-1">
                     Step {step.number}
                   </div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-1">
                     {step.title}
                   </h3>
-                  <p className="text-xs text-gray-400 leading-relaxed">
+                  <p className="text-xs text-gray-500 leading-relaxed">
                     {step.description}
                   </p>
                 </div>
@@ -336,7 +319,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="py-8 text-center relative z-10">
-        <p className="text-xs text-gray-300">
+        <p className="text-xs text-gray-400">
           Built with Next.js, Gemini AI, and Exa Search
         </p>
       </footer>
