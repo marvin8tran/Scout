@@ -13,6 +13,9 @@ interface ResultCardProps {
   api: ScoredAPI;
   rank: number;
   priority?: PriorityMode;
+  onImplement?: (api: ScoredAPI) => void;
+  isImplementing?: boolean;
+  showImplementButton?: boolean;
 }
 
 const SCORE_LABELS: { key: keyof ScoredAPI["scores"]; label: string }[] = [
@@ -22,7 +25,7 @@ const SCORE_LABELS: { key: keyof ScoredAPI["scores"]; label: string }[] = [
   { key: "maintenance", label: "Maintenance" },
 ];
 
-export default function ResultCard({ api, rank, priority }: ResultCardProps) {
+export default function ResultCard({ api, rank, priority, onImplement, isImplementing, showImplementButton }: ResultCardProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -118,6 +121,23 @@ export default function ResultCard({ api, rank, priority }: ResultCardProps) {
           <code>{api.snippet}</code>
         </pre>
       </div>
+
+      {showImplementButton && onImplement && (
+        <button
+          onClick={() => onImplement(api)}
+          disabled={isImplementing}
+          className="w-full px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {isImplementing ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Devin is working...
+            </>
+          ) : (
+            "Implement with Devin"
+          )}
+        </button>
+      )}
     </div>
   );
 }

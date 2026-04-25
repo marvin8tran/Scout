@@ -3,12 +3,14 @@
 import { useState } from "react";
 import InputPanel from "@/components/InputPanel";
 import ResultsList from "@/components/ResultsList";
+import DevinStatus from "@/components/DevinStatus";
 import type {
   AnalyzeRequest,
   ExtractedIntent,
   APICandidate,
   ScoredAPI,
   ScoutResult,
+  InputMode,
 } from "@/types";
 
 type Stage =
@@ -18,6 +20,9 @@ type Stage =
   | "searching"
   | "scoring"
   | "done"
+  | "generating"
+  | "pr-done"
+  | "pr-failed"
   | "error";
 
 export default function Home() {
@@ -25,11 +30,26 @@ export default function Home() {
   const [result, setResult] = useState<ScoutResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activePriority, setActivePriority] = useState<AnalyzeRequest["priority"]>("scalability");
+  const [repoUrl, setRepoUrl] = useState<string | null>(null);
+  const [inputMode, setInputMode] = useState<InputMode | null>(null);
+  const [devinSessionId, setDevinSessionId] = useState<string | null>(null);
+  const [prUrl, setPrUrl] = useState<string | null>(null);
+  const [implementingApiName, setImplementingApiName] = useState<string | null>(null);
 
   const handleSubmit = async (data: AnalyzeRequest) => {
     setResult(null);
     setError(null);
     setActivePriority(data.priority);
+    setInputMode(data.mode);
+    setDevinSessionId(null);
+    setPrUrl(null);
+    setImplementingApiName(null);
+
+    if (data.mode === "github") {
+      setRepoUrl(data.input);
+    } else {
+      setRepoUrl(null);
+    }
 
     try {
       let inputText = data.input;
@@ -109,6 +129,54 @@ export default function Home() {
     }
   };
 
+  const handleImplement = async (api: ScoredAPI) => {
+    if (!repoUrl || !result) return;
+
+    setImplementingApiName(api.name);
+    setStage("generating");
+
+    try {
+      const triggerRes = await fetch("/api/devin/trigger", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          repoUrl,
+          selectedAPI: api,
+          intent: result.intent,
+        }),
+      });
+      const triggerData = await triggerRes.json();
+      if (!triggerRes.ok) throw new Error(triggerData.error || "Failed to trigger Devin session");
+      const { sessionId } = triggerData;
+      setDevinSessionId(sessionId);
+
+      const poll = async () => {
+        const statusRes = await fetch("/api/devin/status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+        const status = await statusRes.json();
+
+        if (status.status === "completed" && status.prUrl) {
+          setPrUrl(status.prUrl);
+          setStage("pr-done");
+          return;
+        } else if (status.status === "failed") {
+          throw new Error(status.message || "Devin session failed");
+        } else {
+          setTimeout(poll, 10000);
+        }
+      };
+
+      setTimeout(poll, 10000);
+    } catch (err) {
+      console.error("Devin error:", err);
+      setError(err instanceof Error ? err.message : "Failed to generate integration");
+      setStage("pr-failed");
+    }
+  };
+
   return (
     <div className="flex flex-col flex-1 items-center bg-zinc-50 dark:bg-zinc-950 font-sans">
       <main className="flex flex-1 w-full flex-col items-center px-4 py-12 sm:py-20">
@@ -125,10 +193,27 @@ export default function Home() {
 
         <InputPanel
           onSubmit={handleSubmit}
-          isLoading={stage !== "idle" && stage !== "done" && stage !== "error"}
+          isLoading={stage !== "idle" && stage !== "done" && stage !== "error" && stage !== "pr-done" && stage !== "pr-failed"}
         />
 
-        <ResultsList result={result} stage={stage} error={error} priority={activePriority} />
+        <ResultsList
+          result={result}
+          stage={stage}
+          error={error}
+          priority={activePriority}
+          onImplement={handleImplement}
+          implementingApiName={implementingApiName}
+          showImplementButton={inputMode === "github"}
+        />
+
+        {(stage === "generating" || stage === "pr-done" || stage === "pr-failed") && implementingApiName && (
+          <DevinStatus
+            status={stage as "generating" | "pr-done" | "pr-failed"}
+            apiName={implementingApiName}
+            prUrl={prUrl ?? undefined}
+            errorMessage={stage === "pr-failed" ? error ?? undefined : undefined}
+          />
+        )}
       </main>
     </div>
   );
