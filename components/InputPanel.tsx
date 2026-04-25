@@ -16,10 +16,10 @@ const PLACEHOLDER_EXAMPLES = [
   "messaging",
 ];
 
-const PRIORITY_OPTIONS: { label: string; value: PriorityMode; keywords: string[] }[] = [
-  { label: "Scalability", value: "scalability", keywords: ["scale", "scalab", "traffic", "high volume", "enterprise", "performance"] },
-  { label: "Cheapest Price", value: "cheapest", keywords: ["cheap", "budget", "free", "cost", "price", "afford", "inexpensive", "low cost"] },
-  { label: "Maintenance", value: "maintenance", keywords: ["maintain", "update", "active", "support", "communit", "deprecat", "outdated", "fresh", "latest"] },
+const PRIORITY_KEYWORDS: { value: PriorityMode; keywords: string[] }[] = [
+  { value: "scalability", keywords: ["scale", "scalab", "traffic", "high volume", "enterprise", "performance"] },
+  { value: "cheapest", keywords: ["cheap", "budget", "free", "cost", "price", "afford", "inexpensive", "low cost"] },
+  { value: "maintenance", keywords: ["maintain", "update", "active", "support", "communit", "deprecat", "outdated", "fresh", "latest"] },
 ];
 
 interface InputPanelProps {
@@ -31,6 +31,8 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
   const [mode, setMode] = useState<InputMode | null>(null);
   const [input, setInput] = useState("");
   const [chatMessage, setChatMessage] = useState("");
+  const [details, setDetails] = useState("");
+  const [showDetails, setShowDetails] = useState(false);
   const [priority, setPriority] = useState<PriorityMode>("scalability");
   const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
@@ -46,7 +48,7 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
 
   const detectPriority = useCallback((text: string): PriorityMode | null => {
     const lower = text.toLowerCase();
-    for (const opt of PRIORITY_OPTIONS) {
+    for (const opt of PRIORITY_KEYWORDS) {
       if (opt.keywords.some((kw) => lower.includes(kw))) {
         return opt.value;
       }
@@ -54,21 +56,24 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
     return null;
   }, []);
 
-  const handleChatChange = (text: string) => {
-    setChatMessage(text);
+  const handleDetailsChange = (text: string) => {
+    setDetails(text);
     const detected = detectPriority(text);
     if (detected) setPriority(detected);
   };
 
   const handleSubmit = () => {
     if (!chatMessage.trim() || !mode || !input.trim()) return;
-    onSubmit({ input: input.trim(), chatMessage: chatMessage.trim(), mode, priority });
+    const fullMessage = details.trim()
+      ? `${chatMessage.trim()}. Additional details: ${details.trim()}`
+      : chatMessage.trim();
+    onSubmit({ input: input.trim(), chatMessage: fullMessage, mode, priority });
   };
 
   const showPlaceholder = !isFocused && chatMessage.length === 0;
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-12">
+    <div className="w-full max-w-3xl mx-auto space-y-10">
       {/* Hero Search Bar */}
       <div className="text-center">
         <div className="flex items-center justify-center gap-0 text-2xl sm:text-4xl font-light text-gray-900 tracking-tight">
@@ -78,7 +83,7 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
               ref={inputRef}
               type="text"
               value={chatMessage}
-              onChange={(e) => handleChatChange(e.target.value)}
+              onChange={(e) => setChatMessage(e.target.value)}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               onKeyDown={(e) => {
@@ -87,7 +92,7 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
                   handleSubmit();
                 }
               }}
-              className="w-full bg-transparent border-b-2 border-gray-300 focus:border-blue-500 outline-none text-center text-2xl sm:text-4xl font-light text-gray-900 pb-1 transition-colors placeholder-transparent"
+              className="w-full bg-transparent border-b-2 border-gray-300 focus:border-indigo-500 outline-none text-center text-2xl sm:text-4xl font-light text-gray-900 pb-1 transition-colors placeholder-transparent"
             />
             {showPlaceholder && (
               <span
@@ -101,11 +106,36 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
           <span className="whitespace-nowrap">API</span>
         </div>
 
+        {/* More Details Toggle */}
+        <div className="mt-6">
+          <button
+            onClick={() => setShowDetails(!showDetails)}
+            className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-indigo-500 transition-colors"
+          >
+            <svg className={`w-4 h-4 transition-transform ${showDetails ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+            {showDetails ? "Hide details" : "Add more details"}
+          </button>
+
+          {showDetails && (
+            <div className="mt-3 max-w-lg mx-auto">
+              <textarea
+                value={details}
+                onChange={(e) => handleDetailsChange(e.target.value)}
+                placeholder="e.g. I need something scalable and well-maintained, price is not a concern. Must support webhooks."
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 text-sm resize-none transition-all"
+              />
+            </div>
+          )}
+        </div>
+
         {/* Submit button */}
         <button
           onClick={handleSubmit}
           disabled={isLoading || !chatMessage.trim() || !mode || !input.trim()}
-          className="mt-8 px-8 py-3 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="mt-6 px-8 py-3 bg-indigo-600 text-white text-sm font-medium rounded-full hover:bg-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md"
         >
           {isLoading ? (
             <span className="flex items-center gap-2">
@@ -168,7 +198,7 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="https://github.com/owner/repo"
-                className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 text-sm transition-all"
+                className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 text-sm transition-all"
               />
             ) : (
               <textarea
@@ -176,29 +206,9 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Paste your code here..."
                 rows={5}
-                className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 text-sm resize-none font-mono transition-all"
+                className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 text-sm resize-none font-mono transition-all"
               />
             )}
-          </div>
-        )}
-
-        {/* Priority Pills */}
-        {mode && (
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-xs text-gray-400 shrink-0 mr-1">Priority:</span>
-            {PRIORITY_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setPriority(opt.value)}
-                className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all ${
-                  priority === opt.value
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
           </div>
         )}
       </div>

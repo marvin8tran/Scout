@@ -68,6 +68,21 @@ const STEPS = [
   },
 ];
 
+function ScoutLogo({ className }: { className?: string }) {
+  return (
+    <span className={className}>
+      Sc
+      <span className="relative inline-block">
+        <svg className="w-[0.85em] h-[0.85em] inline-block -mt-1" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="17" cy="17" r="12" stroke="currentColor" strokeWidth="3.5" fill="none" />
+          <line x1="26" y1="26" x2="36" y2="36" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
+        </svg>
+      </span>
+      ut
+    </span>
+  );
+}
+
 export default function Home() {
   const [stage, setStage] = useState<Stage>("idle");
   const [result, setResult] = useState<ScoutResult | null>(null);
@@ -225,14 +240,40 @@ export default function Home() {
     }
   };
 
+  // Suppress unused variable warnings for state used by Devin integration polling
+  void devinSessionId;
+
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      <main className="flex-1 flex flex-col items-center px-4">
+    <div className="flex flex-col min-h-screen bg-white relative overflow-hidden">
+      {/* Decorative side elements */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden" aria-hidden="true">
+        {/* Left side decorations */}
+        <div className="absolute top-32 -left-6 w-48 h-48 rounded-full bg-indigo-50 opacity-60" />
+        <div className="absolute top-72 left-12 w-24 h-24 rounded-full bg-violet-50 opacity-50" />
+        <div className="absolute top-[420px] -left-4 w-32 h-32 rounded-full bg-blue-50 opacity-40" />
+        <div className="absolute top-20 left-20 w-3 h-3 rounded-full bg-indigo-200 opacity-80" />
+        <div className="absolute top-48 left-8 w-2 h-2 rounded-full bg-violet-300 opacity-60" />
+        <div className="absolute top-96 left-28 w-2.5 h-2.5 rounded-full bg-blue-200 opacity-70" />
+
+        {/* Right side decorations */}
+        <div className="absolute top-20 -right-8 w-56 h-56 rounded-full bg-violet-50 opacity-50" />
+        <div className="absolute top-80 right-16 w-28 h-28 rounded-full bg-indigo-50 opacity-40" />
+        <div className="absolute top-[500px] -right-4 w-36 h-36 rounded-full bg-purple-50 opacity-40" />
+        <div className="absolute top-36 right-24 w-3 h-3 rounded-full bg-violet-200 opacity-70" />
+        <div className="absolute top-64 right-10 w-2 h-2 rounded-full bg-indigo-300 opacity-60" />
+        <div className="absolute top-[450px] right-32 w-2.5 h-2.5 rounded-full bg-purple-200 opacity-70" />
+
+        {/* Subtle gradient lines */}
+        <div className="absolute top-40 left-0 w-16 h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent opacity-40" />
+        <div className="absolute top-60 right-0 w-20 h-px bg-gradient-to-l from-transparent via-violet-200 to-transparent opacity-40" />
+      </div>
+
+      <main className="flex-1 flex flex-col items-center px-4 relative z-10">
         {/* Hero Section */}
-        <section className="w-full max-w-4xl mx-auto pt-20 sm:pt-32 pb-16">
+        <section className="w-full max-w-4xl mx-auto pt-20 sm:pt-28 pb-16">
           <div className="text-center mb-12">
             <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-gray-900 mb-3">
-              API Scout
+              <ScoutLogo />
             </h1>
             <p className="text-gray-400 text-lg font-light">
               Find the perfect API for your project
@@ -278,10 +319,10 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {STEPS.map((step) => (
                 <div key={step.number} className="text-center group">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-50 text-gray-400 mb-4 group-hover:bg-gray-900 group-hover:text-white transition-all">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-50 text-indigo-400 mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-all">
                     {step.icon}
                   </div>
-                  <div className="text-xs font-semibold text-gray-300 uppercase tracking-widest mb-1">
+                  <div className="text-xs font-semibold text-indigo-300 uppercase tracking-widest mb-1">
                     Step {step.number}
                   </div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-1">
@@ -298,7 +339,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="py-8 text-center">
+      <footer className="py-8 text-center relative z-10">
         <p className="text-xs text-gray-300">
           Built with Next.js, Gemini AI, and Exa Search
         </p>

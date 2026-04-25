@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "API Scout",
+  title: "Scout",
   description:
     "Discover, compare, and integrate the best third-party APIs for your use case",
 };
