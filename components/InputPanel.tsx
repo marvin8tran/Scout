@@ -1,7 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { InputMode, PriorityMode, AnalyzeRequest } from "@/types";
+
+const PLACEHOLDER_EXAMPLES = [
+  "authentication",
+  "payment",
+  "mapping",
+  "email",
+  "weather",
+  "translation",
+  "image recognition",
+  "database",
+  "analytics",
+  "messaging",
+];
 
 const PRIORITY_OPTIONS: { label: string; value: PriorityMode; keywords: string[] }[] = [
   { label: "Scalability", value: "scalability", keywords: ["scale", "scalab", "traffic", "high volume", "enterprise", "performance"] },
@@ -19,8 +32,19 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
   const [input, setInput] = useState("");
   const [chatMessage, setChatMessage] = useState("");
   const [priority, setPriority] = useState<PriorityMode>("scalability");
+  const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
+  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const detectPriority = (text: string): PriorityMode | null => {
+  useEffect(() => {
+    if (isFocused && chatMessage.length > 0) return;
+    const interval = setInterval(() => {
+      setCurrentPlaceholder((prev) => (prev + 1) % PLACEHOLDER_EXAMPLES.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [isFocused, chatMessage]);
+
+  const detectPriority = useCallback((text: string): PriorityMode | null => {
     const lower = text.toLowerCase();
     for (const opt of PRIORITY_OPTIONS) {
       if (opt.keywords.some((kw) => lower.includes(kw))) {
@@ -28,7 +52,7 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
       }
     }
     return null;
-  };
+  }, []);
 
   const handleChatChange = (text: string) => {
     setChatMessage(text);
@@ -37,123 +61,147 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
   };
 
   const handleSubmit = () => {
-    if (!input.trim() || !chatMessage.trim() || !mode) return;
+    if (!chatMessage.trim() || !mode || !input.trim()) return;
     onSubmit({ input: input.trim(), chatMessage: chatMessage.trim(), mode, priority });
   };
 
+  const showPlaceholder = !isFocused && chatMessage.length === 0;
+
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-5">
-      {/* Step 1 — Source Selection */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => setMode("snippet")}
-          className={`flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all ${
-            mode === "snippet"
-              ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-              : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600"
-          }`}
-        >
-          <svg className="w-6 h-6 text-zinc-600 dark:text-zinc-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" />
-          </svg>
-          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Code Snippet</span>
-        </button>
-        <button
-          onClick={() => setMode("github")}
-          className={`flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all ${
-            mode === "github"
-              ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-              : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600"
-          }`}
-        >
-          <svg className="w-6 h-6 text-zinc-600 dark:text-zinc-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
-          </svg>
-          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">GitHub Link</span>
-        </button>
-      </div>
-
-      {/* Step 2 — Source Input (shown after mode selection) */}
-      {mode && (
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            {mode === "github" ? "GitHub Repository URL" : "Paste your code"}
-          </label>
-          {mode === "github" ? (
+    <div className="w-full max-w-3xl mx-auto space-y-12">
+      {/* Hero Search Bar */}
+      <div className="text-center">
+        <div className="flex items-center justify-center gap-0 text-2xl sm:text-4xl font-light text-gray-900 tracking-tight">
+          <span className="whitespace-nowrap">I want a</span>
+          <div className="relative mx-2 inline-flex items-center min-w-[180px] sm:min-w-[260px]">
             <input
-              type="url"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="https://github.com/owner/repo"
-              className="w-full px-4 py-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            />
-          ) : (
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Paste your code here...&#10;&#10;e.g. a function that needs an external API"
-              rows={5}
-              className="w-full px-4 py-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none font-mono"
-            />
-          )}
-        </div>
-      )}
-
-      {/* Step 3 — Chat Input + Send Button */}
-      {mode && (
-        <div className="space-y-3">
-          <div className="relative">
-            <textarea
+              ref={inputRef}
+              type="text"
               value={chatMessage}
               onChange={(e) => handleChatChange(e.target.value)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   handleSubmit();
                 }
               }}
-              placeholder="Describe the API you need"
-              rows={2}
-              className="w-full pl-4 pr-12 py-3 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+              className="w-full bg-transparent border-b-2 border-gray-300 focus:border-blue-500 outline-none text-center text-2xl sm:text-4xl font-light text-gray-900 pb-1 transition-colors placeholder-transparent"
             />
+            {showPlaceholder && (
+              <span
+                key={currentPlaceholder}
+                className="absolute inset-0 flex items-center justify-center text-2xl sm:text-4xl font-light text-gray-300 pointer-events-none pb-1 animate-[fade-in-up_0.4s_ease-out]"
+              >
+                {PLACEHOLDER_EXAMPLES[currentPlaceholder]}
+              </span>
+            )}
+          </div>
+          <span className="whitespace-nowrap">API</span>
+        </div>
+
+        {/* Submit button */}
+        <button
+          onClick={handleSubmit}
+          disabled={isLoading || !chatMessage.trim() || !mode || !input.trim()}
+          className="mt-8 px-8 py-3 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        >
+          {isLoading ? (
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Searching...
+            </span>
+          ) : (
+            "Find APIs"
+          )}
+        </button>
+      </div>
+
+      {/* Source Input Section */}
+      <div className="space-y-6">
+        <p className="text-center text-sm text-gray-400 uppercase tracking-widest font-medium">
+          Provide your code context
+        </p>
+
+        {/* Mode Toggle */}
+        <div className="flex justify-center">
+          <div className="inline-flex rounded-full border border-gray-200 p-1 bg-gray-50">
             <button
-              onClick={handleSubmit}
-              disabled={isLoading || !input.trim() || !chatMessage.trim()}
-              className="absolute right-2 bottom-2 p-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              title="Scout APIs"
+              onClick={() => setMode("snippet")}
+              className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                mode === "snippet"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
             >
-              {isLoading ? (
-                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-                </svg>
-              )}
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" />
+              </svg>
+              Code Snippet
+            </button>
+            <button
+              onClick={() => setMode("github")}
+              className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                mode === "github"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+              </svg>
+              GitHub Link
             </button>
           </div>
+        </div>
 
-          {/* Priority Pills */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-500 dark:text-zinc-400 shrink-0">Priority:</span>
+        {/* Source Input */}
+        {mode && (
+          <div className="max-w-2xl mx-auto">
+            {mode === "github" ? (
+              <input
+                type="url"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="https://github.com/owner/repo"
+                className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 text-sm transition-all"
+              />
+            ) : (
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Paste your code here..."
+                rows={5}
+                className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 text-sm resize-none font-mono transition-all"
+              />
+            )}
+          </div>
+        )}
+
+        {/* Priority Pills */}
+        {mode && (
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-xs text-gray-400 shrink-0 mr-1">Priority:</span>
             {PRIORITY_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setPriority(opt.value)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all ${
                   priority === opt.value
-                    ? "bg-blue-600 text-white"
-                    : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-600"
+                    ? "bg-gray-900 text-white"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
                 }`}
               >
                 {opt.label}
               </button>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
