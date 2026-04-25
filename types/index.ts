@@ -51,3 +51,16 @@ export interface ScoutResult {
   intent: ExtractedIntent;
   recommendations: ScoredAPI[];
 }
+
+export interface DevinTriggerRequest {
+  repoUrl: string;
+  selectedAPI: ScoredAPI;
+  intent: ExtractedIntent;
+}
+
+export interface DevinSessionStatus {
+  sessionId: string;
+  status: "pending" | "running" | "completed" | "failed";
+  message?: string;
+  prUrl?: string;
+}

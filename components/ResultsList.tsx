@@ -1,13 +1,16 @@
 "use client";
 
-import type { ScoutResult, PriorityMode } from "@/types";
+import type { ScoutResult, ScoredAPI, PriorityMode } from "@/types";
 import ResultCard from "./ResultCard";
 
 interface ResultsListProps {
   result: ScoutResult | null;
-  stage: "idle" | "fetching" | "analyzing" | "searching" | "scoring" | "done" | "error";
+  stage: "idle" | "fetching" | "analyzing" | "searching" | "scoring" | "done" | "generating" | "pr-done" | "pr-failed" | "error";
   error: string | null;
   priority?: PriorityMode;
+  onImplement?: (api: ScoredAPI) => void;
+  implementingApiName?: string | null;
+  showImplementButton?: boolean;
 }
 
 const STAGE_MESSAGES: Record<string, string> = {
@@ -15,9 +18,10 @@ const STAGE_MESSAGES: Record<string, string> = {
   analyzing: "Analyzing your input...",
   searching: "Searching for API candidates...",
   scoring: "Scoring and ranking APIs...",
+  generating: "Devin is generating your integration...",
 };
 
-export default function ResultsList({ result, stage, error, priority }: ResultsListProps) {
+export default function ResultsList({ result, stage, error, priority, onImplement, implementingApiName, showImplementButton }: ResultsListProps) {
   if (error) {
     return (
       <div className="w-full max-w-2xl mx-auto mt-8 p-4 rounded-xl bg-red-50 border border-red-100">
@@ -26,7 +30,7 @@ export default function ResultsList({ result, stage, error, priority }: ResultsL
     );
   }
 
-  if (stage !== "idle" && stage !== "done") {
+  if (stage !== "idle" && stage !== "done" && stage !== "generating" && stage !== "pr-done" && stage !== "pr-failed") {
     return (
       <div className="w-full max-w-2xl mx-auto mt-16 flex flex-col items-center gap-4">
         <div className="w-8 h-8 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
@@ -98,7 +102,15 @@ export default function ResultsList({ result, stage, error, priority }: ResultsL
       {/* Result Cards */}
       <div className="space-y-4">
         {result.recommendations.map((api, i) => (
-          <ResultCard key={api.name} api={api} rank={i + 1} priority={priority} />
+          <ResultCard
+            key={api.name}
+            api={api}
+            rank={i + 1}
+            priority={priority}
+            onImplement={onImplement}
+            isImplementing={api.name === implementingApiName}
+            showImplementButton={showImplementButton}
+          />
         ))}
       </div>
     </div>

@@ -25,6 +25,43 @@ Analyze both inputs and return ONLY a valid JSON object matching this exact shap
   "search_queries": ["3 to 5 specific Exa search queries to find candidate APIs"]
 }`;
 
+export function buildDevinSessionPrompt(params: {
+  repoUrl: string;
+  apiName: string;
+  apiDocsUrl: string;
+  apiSnippet: string;
+  apiWinnerReason: string;
+  language: string;
+  framework: string | null;
+  task: string;
+}): string {
+  return `You are integrating the ${params.apiName} API into a ${params.language}${params.framework ? ` / ${params.framework}` : ''} project.
+
+Repository: ${params.repoUrl}
+
+Steps:
+1. Fork this repository
+2. Clone your fork
+3. Analyze the project structure to understand where integration code should go
+4. Install the ${params.apiName} SDK/package using the project's package manager
+5. Create the integration:
+   - A service/client module for ${params.apiName}
+   - Type definitions if using TypeScript
+   - Example usage showing: ${params.task}
+   - Error handling and environment variable setup
+6. Reference snippet for the first API call:
+\`\`\`
+${params.apiSnippet}
+\`\`\`
+7. API documentation: ${params.apiDocsUrl}
+8. Commit to branch: scout/integrate-${params.apiName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}
+9. Push and open a PR from your fork to the original repo
+10. PR title: "Scout: Integrate ${params.apiName} for ${params.task}"
+11. PR description should explain what was added, why ${params.apiName} was chosen (${params.apiWinnerReason}), and any setup instructions (env vars, install commands)
+
+Do NOT merge the PR. Just create it and return the PR URL.`;
+}
+
 export function buildScoringPrompt(params: {
   task: string;
   language: string;
