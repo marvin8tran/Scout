@@ -1,12 +1,13 @@
 "use client";
 
-import type { ScoutResult } from "@/types";
+import type { ScoutResult, PriorityMode } from "@/types";
 import ResultCard from "./ResultCard";
 
 interface ResultsListProps {
   result: ScoutResult | null;
   stage: "idle" | "fetching" | "analyzing" | "searching" | "scoring" | "done" | "error";
   error: string | null;
+  priority?: PriorityMode;
 }
 
 const STAGE_MESSAGES: Record<string, string> = {
@@ -16,7 +17,7 @@ const STAGE_MESSAGES: Record<string, string> = {
   scoring: "Scoring and ranking APIs...",
 };
 
-export default function ResultsList({ result, stage, error }: ResultsListProps) {
+export default function ResultsList({ result, stage, error, priority }: ResultsListProps) {
   if (error) {
     return (
       <div className="w-full max-w-2xl mx-auto mt-8 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
@@ -98,7 +99,7 @@ export default function ResultsList({ result, stage, error }: ResultsListProps) 
       {/* Result Cards */}
       <div className="space-y-4">
         {result.recommendations.map((api, i) => (
-          <ResultCard key={api.name} api={api} rank={i + 1} />
+          <ResultCard key={api.name} api={api} rank={i + 1} priority={priority} />
         ))}
       </div>
     </div>

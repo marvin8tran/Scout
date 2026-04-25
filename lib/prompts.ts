@@ -1,6 +1,15 @@
 export const INTENT_EXTRACTION_PROMPT = `You are an API requirements analyst. A developer wants to find the best third-party API for their use case.
 
-Analyze the input and return ONLY a valid JSON object matching this exact shape — no markdown, no explanation:
+The developer will provide two things:
+1. Code context — either a code snippet or repository content showing their technical stack
+2. A chat message — a natural language description of what API they are looking for and their priority preference (scalability, cheapest price, or maintenance)
+
+Pay special attention to the user's stated priority preference when setting expected_scale and pricing_sensitive:
+- If priority is "scalability", set expected_scale to "high"
+- If priority is "cheapest", set pricing_sensitive to true
+- If priority is "maintenance", focus search_queries on well-maintained and actively updated APIs
+
+Analyze both inputs and return ONLY a valid JSON object matching this exact shape — no markdown, no explanation:
 {
   "task": "one sentence describing what they are trying to do",
   "category": "payments | email | maps | auth | storage | AI | SMS | search | other",
@@ -24,9 +33,11 @@ export function buildScoringPrompt(params: {
   candidates: string;
 }): string {
   const weightDescription =
-    params.priority === "docs"
-      ? "compatibility (40%) and price (30%)"
-      : "scalability (40%) and price (30%)";
+    params.priority === "scalability"
+      ? "scalability (40%) and compatibility (30%)"
+      : params.priority === "cheapest"
+        ? "price (50%) and compatibility (25%)"
+        : "maintenance (40%) and compatibility (30%)";
 
   return `You are an API evaluator. Score the following candidate APIs for this use case.
 

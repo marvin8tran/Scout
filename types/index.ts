@@ -1,8 +1,9 @@
-export type InputMode = "github" | "snippet" | "description";
-export type PriorityMode = "docs" | "scale";
+export type InputMode = "github" | "snippet";
+export type PriorityMode = "scalability" | "cheapest" | "maintenance";
 
 export interface AnalyzeRequest {
-  input: string;
+  input: string;          // code snippet or GitHub URL content
+  chatMessage: string;    // user's chat message describing desired API + priority
   mode: InputMode;
   priority: PriorityMode;
 }
