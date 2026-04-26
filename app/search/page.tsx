@@ -46,8 +46,8 @@ const STEPS = [
   },
   {
     number: "2",
-    title: "Share your code",
-    description: "Paste a code snippet or link a public GitHub repository for context.",
+    title: "Link your repo",
+    description: "Provide a public GitHub repository URL so Scout can analyze your tech stack.",
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" />
@@ -92,7 +92,7 @@ export default function Home() {
     setError(null);
     pollGenerationRef.current += 1;
 
-    const repoUrl = data.mode === "github" ? data.input : null;
+    const repoUrl = data.input;
 
     // Auto-scroll to loading indicator after a short delay
     setTimeout(() => {
@@ -100,21 +100,17 @@ export default function Home() {
     }, 150);
 
     try {
-      let inputText = data.input;
-
-      if (data.mode === "github") {
-        setStage("fetching");
-        const fetchRes = await fetch("/api/fetch-repo", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: data.input }),
-        });
-        const fetchData = await fetchRes.json();
-        if (!fetchRes.ok) throw new Error(fetchData.error || "Failed to fetch repo");
-        inputText = Object.entries(fetchData.files as Record<string, string>)
-          .map(([name, content]) => `--- ${name} ---\n${content}`)
-          .join("\n\n");
-      }
+      setStage("fetching");
+      const fetchRes = await fetch("/api/fetch-repo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: data.input }),
+      });
+      const fetchData = await fetchRes.json();
+      if (!fetchRes.ok) throw new Error(fetchData.error || "Failed to fetch repo");
+      const inputText = Object.entries(fetchData.files as Record<string, string>)
+        .map(([name, content]) => `--- ${name} ---\n${content}`)
+        .join("\n\n");
 
       setStage("analyzing");
       const analyzeRes = await fetch("/api/analyze", {

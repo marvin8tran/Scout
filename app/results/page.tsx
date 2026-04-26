@@ -122,7 +122,7 @@ export default function ResultsPage() {
           priority={resultData.priority}
           onImplement={handleImplement}
           implementingApiName={implementingApiName}
-          showImplementButton={resultData.inputMode === "github"}
+          showImplementButton={true}
           devinSessionId={devinSessionId}
           onDevinComplete={handleDevinComplete}
           onDevinError={handleDevinError}

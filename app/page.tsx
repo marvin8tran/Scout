@@ -26,9 +26,9 @@ const WORDS = [
 const STEPS = [
   {
     number: "1",
-    title: "Provide your code context",
+    title: "Link your GitHub repo",
     description:
-      "Paste a code snippet or provide a public GitHub repository URL so Scout can understand your tech stack.",
+      "Provide a public GitHub repository URL so Scout can understand your tech stack.",
     example: "https://github.com/your-username/your-project",
     exampleType: "url" as const,
   },
