@@ -23,7 +23,7 @@ const KEYWORD_PATTERNS: [RegExp, number][] = [
   [/type.*defin/i, 3],
   [/error.*handl|env.*var|\.env/i, 4],
   [/commit|push/i, 5],
-  [/pull.*request|PR|pr create/i, 6],
+  [/pull.*request|\bPR\b|pr create/i, 6],
   [/finish/i, 6],
 ];
 

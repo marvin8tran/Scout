@@ -78,6 +78,12 @@ export default function DevinProgressTracker({
           if (data.prUrl) {
             setPrUrl(data.prUrl);
             onCompleteRef.current?.(data.prUrl);
+          } else {
+            const msg = "Session completed but no pull request was created";
+            setErrorMessage(msg);
+            setSessionStatus("failed");
+            setSteps(inferProgressSteps("failed", msg, elapsed));
+            onErrorRef.current?.(msg);
           }
           return;
         }
