@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchRepoFiles } from "@/lib/github";
+import { fetchRepoFiles, isValidGitHubUrl, validateGitHubRepoExists } from "@/lib/github";
 
 export async function POST(request: Request) {
   try {
@@ -10,6 +10,16 @@ export async function POST(request: Request) {
         { error: "A GitHub URL is required" },
         { status: 400 }
       );
+    }
+
+    const formatCheck = isValidGitHubUrl(url);
+    if (!formatCheck.valid) {
+      return NextResponse.json({ error: formatCheck.error }, { status: 400 });
+    }
+
+    const repoCheck = await validateGitHubRepoExists(url);
+    if (!repoCheck.exists) {
+      return NextResponse.json({ error: repoCheck.error }, { status: 400 });
     }
 
     const files = await fetchRepoFiles(url);

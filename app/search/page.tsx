@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import InputPanel from "@/components/InputPanel";
+import { isValidGitHubUrl } from "@/lib/github";
 import type {
   AnalyzeRequest,
   ExtractedIntent,
@@ -91,6 +92,13 @@ export default function Home() {
   const handleSubmit = async (data: AnalyzeRequest) => {
     setError(null);
     pollGenerationRef.current += 1;
+
+    const urlCheck = isValidGitHubUrl(data.input);
+    if (!urlCheck.valid) {
+      setError(urlCheck.error ?? "Invalid GitHub URL");
+      setStage("error");
+      return;
+    }
 
     const repoUrl = data.input;
 
