@@ -45,27 +45,27 @@ export default function ApiOverviewCard({
       whileHover={{ y: -3 }}
     >
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold border bg-indigo-100 text-indigo-700 border-indigo-200">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold border bg-indigo-100 text-indigo-700 border-indigo-200 shrink-0">
             {rank}
           </span>
-          <div>
-            <h3 className="font-semibold text-gray-900 text-lg">
+          <div className="min-w-0">
+            <h3 className="font-semibold text-gray-900 text-lg truncate">
               {api.name}
             </h3>
             <a
               href={api.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-indigo-400 hover:text-indigo-600 hover:underline transition-colors"
+              className="text-xs text-indigo-400 hover:text-indigo-600 hover:underline transition-colors block truncate"
               onClick={(e) => e.stopPropagation()}
             >
               {api.url}
             </a>
           </div>
         </div>
-        <div className="text-right">
+        <div className="text-right shrink-0">
           <div className="text-3xl font-bold text-gray-900">
             {api.final_score.toFixed(1)}
           </div>
