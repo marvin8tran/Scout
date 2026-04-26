@@ -75,8 +75,6 @@ export default function ResultsPage() {
 
   const handleDevinError = (error: string) => {
     setDevinError(error);
-    setImplementingApiName(null);
-    setDevinSessionId(null);
     setStage("pr-failed");
   };
 
