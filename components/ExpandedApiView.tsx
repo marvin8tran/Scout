@@ -299,7 +299,7 @@ export default function ExpandedApiView({
                 </div>
               </div>
             </div>
-          )
+          )}
         </motion.div>
       )}
     </motion.div>
