@@ -40,6 +40,7 @@ export function buildDevinSessionPrompt(params: {
   language: string;
   framework: string | null;
   task: string;
+  developerContext?: string;
 }): string {
   const branchName = `scout/integrate-${params.apiName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
@@ -87,7 +88,13 @@ ${params.apiSnippet}
     - Why ${params.apiName} was chosen (${params.apiWinnerReason})
     - Setup instructions (env vars needed, install commands)
 
-Do NOT merge the PR. Just create it and return the PR URL.
+${params.developerContext ? `
+Developer Instructions:
+${params.developerContext}
+
+Follow these instructions carefully when implementing the integration.
+
+` : ''}Do NOT merge the PR. Just create it and return the PR URL.
 
 CRITICAL REMINDERS:
 - NEVER push to ${params.repoOwner}/${params.repoName} directly

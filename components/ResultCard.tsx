@@ -13,7 +13,7 @@ interface ResultCardProps {
   api: ScoredAPI;
   rank: number;
   priority?: PriorityMode;
-  onImplement?: (api: ScoredAPI) => void;
+  onImplement?: (api: ScoredAPI, developerContext?: string) => void;
   isImplementing?: boolean;
   isAnyImplementing?: boolean;
   showImplementButton?: boolean;
@@ -28,6 +28,8 @@ const SCORE_LABELS: { key: keyof ScoredAPI["scores"]; label: string }[] = [
 
 export default function ResultCard({ api, rank, priority, onImplement, isImplementing, isAnyImplementing, showImplementButton }: ResultCardProps) {
   const [copied, setCopied] = useState(false);
+  const [showContextInput, setShowContextInput] = useState(false);
+  const [contextText, setContextText] = useState("");
 
   const handleCopy = async () => {
     try {
@@ -170,20 +172,64 @@ export default function ResultCard({ api, rank, priority, onImplement, isImpleme
       </div>
 
       {showImplementButton && onImplement && (
-        <button
-          onClick={() => onImplement(api)}
-          disabled={isAnyImplementing}
-          className="w-full px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {isImplementing ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Devin is working...
-            </>
+        <div className="space-y-2">
+          {!showContextInput ? (
+            <button
+              onClick={() => setShowContextInput(true)}
+              disabled={isAnyImplementing}
+              className="w-full px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isImplementing ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Devin is working...
+                </>
+              ) : (
+                "Implement with Devin"
+              )}
+            </button>
           ) : (
-            "Implement with Devin"
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 space-y-2">
+              <h4 className="text-xs font-semibold text-zinc-700">
+                Implementation Instructions (optional)
+              </h4>
+              <textarea
+                value={contextText}
+                onChange={(e) => setContextText(e.target.value.slice(0, 2000))}
+                placeholder="e.g., Put the integration in src/services/, use the singleton pattern, add retry logic, write tests..."
+                rows={3}
+                maxLength={2000}
+                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-300 resize-none"
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-zinc-400">
+                  {contextText.length}/2000
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setShowContextInput(false);
+                      setContextText("");
+                    }}
+                    className="px-3 py-1.5 rounded-lg border border-zinc-300 text-xs font-medium text-zinc-600 hover:bg-zinc-100 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      onImplement(api, contextText || undefined);
+                      setShowContextInput(false);
+                    }}
+                    disabled={isAnyImplementing}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Send to Devin
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
-        </button>
+        </div>
       )}
     </div>
   );

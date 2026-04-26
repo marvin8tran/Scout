@@ -40,7 +40,7 @@ export default function ResultsPage() {
     }
   }, [resultData, router]);
 
-  const handleImplement = async (api: ScoredAPI) => {
+  const handleImplement = async (api: ScoredAPI, developerContext?: string) => {
     if (!resultData?.repoUrl || !resultData?.result) return;
 
     setImplementingApiName(api.name);
@@ -56,6 +56,7 @@ export default function ResultsPage() {
           repoUrl: resultData.repoUrl,
           selectedAPI: api,
           intent: resultData.result.intent,
+          developerContext,
         }),
       });
       const triggerData = await triggerRes.json();

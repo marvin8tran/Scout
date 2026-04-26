@@ -11,7 +11,7 @@ interface ResultsListProps {
   stage: string;
   error: string | null;
   priority?: PriorityMode;
-  onImplement?: (api: ScoredAPI) => void;
+  onImplement?: (api: ScoredAPI, developerContext?: string) => void;
   implementingApiName?: string | null;
   showImplementButton?: boolean;
 }
