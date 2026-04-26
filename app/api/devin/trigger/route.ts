@@ -25,8 +25,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ sessionId });
   } catch (error) {
     console.error("devin trigger error:", error);
-    const message =
+    const raw =
       error instanceof Error ? error.message : "Failed to trigger Devin session";
+    const message = raw.includes("Failed to fork")
+      ? "Failed to fork repository — please check the GitHub URL is valid and public"
+      : raw;
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

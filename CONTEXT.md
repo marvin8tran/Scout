@@ -93,6 +93,7 @@ Required variables:
 - `EXA_API_KEY` — from exa.ai/api
 - `DEVIN_API_KEY` — from Devin API (service user credential)
 - `DEVIN_ORG_ID` — your Devin organization ID
+- `GITHUB_PAT` — GitHub classic Personal Access Token with `repo` scope (used for server-side forking)
 
 When adding a new env variable:
 1. Add it to `.env.local` manually (never ask AI to do this)

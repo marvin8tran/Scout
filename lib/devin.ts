@@ -1,4 +1,5 @@
 import { buildDevinSessionPrompt } from "@/lib/prompts";
+import { forkRepo } from "@/lib/github";
 import type { DevinTriggerRequest, DevinSessionStatus } from "@/types";
 
 const DEVIN_API_BASE = "https://api.devin.ai/v3";
@@ -23,6 +24,8 @@ export async function triggerDevinSession(
   const apiKey = getApiKey();
   const orgId = getOrgId();
 
+  const { forkOwner, forkUrl } = await forkRepo(request.repoUrl);
+
   const repoMatch = request.repoUrl.match(/github\.com\/([\w.-]+)\/([\w.-]+)/);
   const repoOwner = repoMatch?.[1] ?? '';
   const repoName = repoMatch?.[2] ?? '';
@@ -31,6 +34,8 @@ export async function triggerDevinSession(
     repoUrl: request.repoUrl,
     repoOwner,
     repoName,
+    forkOwner,
+    forkUrl,
     apiName: request.selectedAPI.name,
     apiDocsUrl: request.selectedAPI.docs_url,
     apiSnippet: request.selectedAPI.snippet,
