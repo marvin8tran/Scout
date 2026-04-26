@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { PriorityMode, AnalyzeRequest } from "@/types";
+import { isValidGitHubUrl } from "@/lib/github";
 
 const PLACEHOLDER_EXAMPLES = [
   "authentication",
@@ -60,8 +61,16 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
     if (detected) setPriority(detected);
   };
 
+  const [urlError, setUrlError] = useState<string | null>(null);
+
   const handleSubmit = () => {
     if (!chatMessage.trim() || !input.trim()) return;
+    const validation = isValidGitHubUrl(input.trim());
+    if (!validation.valid) {
+      setUrlError(validation.error ?? "Invalid GitHub URL");
+      return;
+    }
+    setUrlError(null);
     const fullMessage = details.trim()
       ? `${chatMessage.trim()}. Additional details: ${details.trim()}`
       : chatMessage.trim();
@@ -148,10 +157,22 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
           <input
             type="url"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              if (urlError) setUrlError(null);
+            }}
+            onBlur={() => {
+              if (input.trim()) {
+                const check = isValidGitHubUrl(input.trim());
+                setUrlError(check.valid ? null : (check.error ?? "Invalid GitHub URL"));
+              } else {
+                setUrlError(null);
+              }
+            }}
             placeholder="https://github.com/owner/repo"
             className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 text-sm transition-all"
           />
+          {urlError && <p className="text-xs text-red-500 mt-1 text-center">{urlError}</p>}
         </div>
       </div>
     </div>

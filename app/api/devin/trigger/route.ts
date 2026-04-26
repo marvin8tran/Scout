@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { triggerDevinSession } from "@/lib/devin";
+import { isValidGitHubUrl } from "@/lib/github";
 import type { DevinTriggerRequest } from "@/types";
 
 export async function POST(request: Request) {
@@ -13,10 +14,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const githubUrlPattern = /^https?:\/\/github\.com\/[\w.-]+\/[\w.-]+/;
-    if (!githubUrlPattern.test(body.repoUrl)) {
+    const urlCheck = isValidGitHubUrl(body.repoUrl);
+    if (!urlCheck.valid) {
       return NextResponse.json(
-        { error: "Invalid GitHub URL" },
+        { error: urlCheck.error ?? "Invalid GitHub URL" },
         { status: 400 }
       );
     }

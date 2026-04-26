@@ -12,12 +12,81 @@ const ENTRY_POINT_FILES = [
   "server.js",
 ];
 
+export function isValidGitHubUrl(url: string): { valid: boolean; error?: string } {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return { valid: false, error: "Invalid URL format" };
+  }
+
+  if (parsed.hostname !== "github.com" && parsed.hostname !== "www.github.com") {
+    return { valid: false, error: "URL must be a github.com link" };
+  }
+
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    return { valid: false, error: "URL must use http or https protocol" };
+  }
+
+  const segments = parsed.pathname.split("/").filter(Boolean);
+  if (segments.length < 2) {
+    return {
+      valid: false,
+      error: "URL must include owner and repository (e.g. https://github.com/owner/repo)",
+    };
+  }
+
+  const validSegment = /^[\w.-]+$/;
+  if (!validSegment.test(segments[0]) || !validSegment.test(segments[1])) {
+    return {
+      valid: false,
+      error: "URL must include owner and repository (e.g. https://github.com/owner/repo)",
+    };
+  }
+
+  return { valid: true };
+}
+
+export async function validateGitHubRepoExists(
+  url: string
+): Promise<{ exists: boolean; error?: string }> {
+  const formatCheck = isValidGitHubUrl(url);
+  if (!formatCheck.valid) {
+    return { exists: false, error: formatCheck.error };
+  }
+
+  const { owner, repo } = parseGitHubUrl(url);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}`,
+      { method: "HEAD", signal: controller.signal }
+    );
+
+    if (res.status === 200) return { exists: true };
+    if (res.status === 404) {
+      return { exists: false, error: "Repository not found — make sure it exists and is public" };
+    }
+    if (res.status === 403) {
+      return { exists: false, error: "Repository is not accessible — it may be private" };
+    }
+    return { exists: false, error: "Could not reach GitHub to verify repository" };
+  } catch {
+    return { exists: false, error: "Could not reach GitHub to verify repository" };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export function parseGitHubUrl(url: string): { owner: string; repo: string } {
+  const check = isValidGitHubUrl(url);
+  if (!check.valid) {
+    throw new Error(check.error ?? "Invalid GitHub URL");
+  }
   const parsed = new URL(url);
   const parts = parsed.pathname.split("/").filter(Boolean);
-  if (parts.length < 2) {
-    throw new Error("Invalid GitHub URL: must contain owner and repo");
-  }
   return { owner: parts[0], repo: parts[1] };
 }
 
