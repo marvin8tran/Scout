@@ -126,7 +126,18 @@ export async function getSessionStatus(
     };
   }
 
+  if (data.status === "suspended") {
+    const detail: string = data.status_detail || "suspended";
+    return {
+      sessionId,
+      status: "failed",
+      message: `Devin session suspended: ${detail}`,
+      url: sessionUrl,
+    };
+  }
+
   if (
+    data.status === "exit" ||
     data.status_detail === "finished" ||
     (data.status === "running" && prEntry)
   ) {
@@ -138,7 +149,7 @@ export async function getSessionStatus(
     };
   }
 
-  if (data.status === "running" || data.status === "creating" || data.status === "claimed") {
+  if (data.status === "running" || data.status === "creating" || data.status === "claimed" || data.status === "resuming") {
     return {
       sessionId,
       status: "running",
