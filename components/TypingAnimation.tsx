@@ -14,8 +14,10 @@ export default function TypingAnimation({
   const [displayText, setDisplayText] = useState("");
   const wordIndexRef = useRef(0);
   const isDeletingRef = useRef(false);
+  const isPausedRef = useRef(false);
   const onWordChangeRef = useRef(onWordChange);
   const wordsRef = useRef(words);
+  const displayTextRef = useRef("");
 
   useEffect(() => {
     onWordChangeRef.current = onWordChange;
@@ -26,31 +28,37 @@ export default function TypingAnimation({
   }, [words]);
 
   const tick = useCallback(() => {
+    if (isPausedRef.current) return;
+
     const word = wordsRef.current[wordIndexRef.current];
 
     if (isDeletingRef.current) {
-      setDisplayText((prev) => {
-        const next = prev.slice(0, -1);
-        if (next === "") {
-          isDeletingRef.current = false;
-          wordIndexRef.current =
-            (wordIndexRef.current + 1) % wordsRef.current.length;
-          const newWord = wordsRef.current[wordIndexRef.current];
-          onWordChangeRef.current?.(newWord);
-        }
-        return next;
-      });
+      const next = displayTextRef.current.slice(0, -1);
+      displayTextRef.current = next;
+      setDisplayText(next);
+
+      if (next === "") {
+        isDeletingRef.current = false;
+        wordIndexRef.current =
+          (wordIndexRef.current + 1) % wordsRef.current.length;
+        const newWord = wordsRef.current[wordIndexRef.current];
+        onWordChangeRef.current?.(newWord);
+      }
     } else {
-      setDisplayText((prev) => {
-        const next = word.slice(0, prev.length + 1);
-        if (next === word) {
-          setTimeout(() => {
-            isDeletingRef.current = true;
-            setDisplayText((p) => p.slice(0, -1));
-          }, 1500);
-        }
-        return next;
-      });
+      const next = word.slice(0, displayTextRef.current.length + 1);
+      displayTextRef.current = next;
+      setDisplayText(next);
+
+      if (next === word) {
+        isPausedRef.current = true;
+        setTimeout(() => {
+          isPausedRef.current = false;
+          isDeletingRef.current = true;
+          const deleted = displayTextRef.current.slice(0, -1);
+          displayTextRef.current = deleted;
+          setDisplayText(deleted);
+        }, 1500);
+      }
     }
   }, []);
 
@@ -59,6 +67,7 @@ export default function TypingAnimation({
   }, []);
 
   useEffect(() => {
+    if (isPausedRef.current) return;
     const speed = isDeletingRef.current ? 50 : 80;
     const timer = setTimeout(tick, speed);
     return () => clearTimeout(timer);
