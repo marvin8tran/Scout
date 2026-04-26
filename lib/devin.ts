@@ -18,6 +18,13 @@ function getOrgId(): string {
   return process.env.DEVIN_ORG_ID;
 }
 
+function getGitHubPat(): string {
+  if (!process.env.GITHUB_PAT) {
+    throw new Error("GITHUB_PAT environment variable is not set");
+  }
+  return process.env.GITHUB_PAT;
+}
+
 export async function triggerDevinSession(
   request: DevinTriggerRequest
 ): Promise<{ sessionId: string }> {
@@ -56,6 +63,13 @@ export async function triggerDevinSession(
       body: JSON.stringify({
         prompt,
         title: `Scout: Integrate ${request.selectedAPI.name} for ${request.intent.task}`,
+        session_secrets: [
+          {
+            key: "GITHUB_TOKEN",
+            value: getGitHubPat(),
+            sensitive: true,
+          },
+        ],
       }),
     }
   );

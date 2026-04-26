@@ -50,37 +50,39 @@ IMPORTANT: You do NOT have write access to the original repository. A fork has a
 ## Step-by-step instructions (follow exactly):
 
 ### Phase 1: Clone the pre-existing fork
-1. Clone the fork at ${params.forkUrl}:
+1. Configure Git to use the provided GitHub token for authentication:
+   \`git config --global url."https://\${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"\`
+2. Clone the fork at ${params.forkUrl}:
    \`git clone ${params.forkUrl} && cd ${params.repoName}\`
-2. Create a new branch named: ${branchName}
+3. Create a new branch named: ${branchName}
    \`git checkout -b ${branchName}\`
 
 ### Phase 2: Implement the integration
-3. Analyze the project structure to understand where integration code should go
-4. Install the ${params.apiName} SDK/package using the project's package manager
-5. Create the integration:
+4. Analyze the project structure to understand where integration code should go
+5. Install the ${params.apiName} SDK/package using the project's package manager
+6. Create the integration:
    - A service/client module for ${params.apiName}
    - Type definitions if using TypeScript
    - Example usage showing: ${params.task}
    - Error handling and environment variable setup (.env.example)
-6. Reference snippet for the first API call:
+7. Reference snippet for the first API call:
 \`\`\`
 ${params.apiSnippet}
 \`\`\`
-7. API documentation: ${params.apiDocsUrl}
+8. API documentation: ${params.apiDocsUrl}
 
 ### Phase 3: Commit and push to the fork
-8. Stage and commit all changes to branch ${branchName}
-9. Push the branch to the fork (${params.forkUrl}), NOT to the upstream repo:
-   \`git push origin ${branchName}\`
+9. Stage and commit all changes to branch ${branchName}
+10. Push the branch to the fork (${params.forkUrl}), NOT to the upstream repo:
+    \`git push origin ${branchName}\`
 
 ### Phase 4: Create a cross-repo pull request
-10. Create a pull request FROM the fork TO the original repository:
+11. Create a pull request FROM the fork TO the original repository:
     - Base repo: ${params.repoOwner}/${params.repoName} (branch: main)
     - Head repo: ${params.forkOwner}/${params.repoName} (branch: ${branchName})
     - Use: \`gh pr create --repo ${params.repoOwner}/${params.repoName} --head ${params.forkOwner}:${branchName} --base main --title "Scout: Integrate ${params.apiName} for ${params.task}" --body "..."\`
-11. PR title: "Scout: Integrate ${params.apiName} for ${params.task}"
-12. PR description should explain:
+12. PR title: "Scout: Integrate ${params.apiName} for ${params.task}"
+13. PR description should explain:
     - What was added
     - Why ${params.apiName} was chosen (${params.apiWinnerReason})
     - Setup instructions (env vars needed, install commands)
