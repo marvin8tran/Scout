@@ -47,7 +47,7 @@ export default function ApiOverviewCard({
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold border bg-indigo-100 text-indigo-700 border-indigo-200 shrink-0">
+          <span className="flex items-center justify-center w-9 h-9 min-w-9 min-h-9 aspect-square rounded-full text-sm font-bold border bg-indigo-100 text-indigo-700 border-indigo-200 shrink-0">
             {rank}
           </span>
           <div className="min-w-0">
