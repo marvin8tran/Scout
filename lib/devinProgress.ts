@@ -7,7 +7,6 @@ const STEP_LABELS = [
   "Creating integration code",
   "Setting up error handling & env vars",
   "Committing & pushing changes",
-  "Opening pull request",
 ] as const;
 
 const KEYWORD_PATTERNS: [RegExp, number][] = [
@@ -23,11 +22,11 @@ const KEYWORD_PATTERNS: [RegExp, number][] = [
   [/type.*defin/i, 3],
   [/error.*handl|env.*var|\.env/i, 4],
   [/commit|push/i, 5],
-  [/pull.*request|\bPR\b|pr create/i, 6],
-  [/finish/i, 6],
+  [/pull.*request|\bPR\b|pr create/i, 5],
+  [/finish/i, 5],
 ];
 
-const TIME_THRESHOLDS_SEC = [0, 20, 50, 90, 150, 210, 270];
+const TIME_THRESHOLDS_SEC = [0, 20, 50, 90, 150, 210];
 
 function inferStepFromKeywords(message: string): number | null {
   for (const [pattern, stepIdx] of KEYWORD_PATTERNS) {
