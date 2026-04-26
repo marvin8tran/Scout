@@ -80,9 +80,7 @@ export async function validateGitHubRepoExists(
     if (res.status === 403) {
       return {
         exists: false,
-        error: pat
-          ? "Repository is not accessible — it may be private"
-          : "GitHub API rate limit reached — please try again later",
+        error: "GitHub API rate limit reached — please try again later",
       };
     }
     return { exists: false, error: "Could not reach GitHub to verify repository" };
