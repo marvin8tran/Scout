@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Outer circle -->
+  <circle cx="52" cy="52" r="40" stroke="#6366f1" stroke-width="4" fill="none"/>
+  <!-- Inner compass cross -->
+  <line x1="52" y1="20" x2="52" y2="84" stroke="#6366f1" stroke-width="2" opacity="0.3"/>
+  <line x1="20" y1="52" x2="84" y2="52" stroke="#6366f1" stroke-width="2" opacity="0.3"/>
+  <!-- Compass needle (N) -->
+  <polygon points="52,22 46,52 52,46 58,52" fill="#6366f1"/>
+  <!-- Compass needle (S) -->
+  <polygon points="52,82 46,52 52,58 58,52" fill="#a5b4fc"/>
+  <!-- Magnifying glass handle -->
+  <line x1="78" y1="78" x2="108" y2="108" stroke="#6366f1" stroke-width="6" stroke-linecap="round"/>
+</svg>
