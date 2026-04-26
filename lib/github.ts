@@ -12,7 +12,7 @@ const ENTRY_POINT_FILES = [
   "server.js",
 ];
 
-function parseGitHubUrl(url: string): { owner: string; repo: string } {
+export function parseGitHubUrl(url: string): { owner: string; repo: string } {
   const parsed = new URL(url);
   const parts = parsed.pathname.split("/").filter(Boolean);
   if (parts.length < 2) {
@@ -50,6 +50,62 @@ async function fetchFileWithFallback(
   const content = await fetchRawFile(owner, repo, file, "main");
   if (content !== null) return content;
   return fetchRawFile(owner, repo, file, "master");
+}
+
+const FORK_POLL_INTERVAL_MS = 5000;
+const FORK_POLL_MAX_ATTEMPTS = 6;
+
+export async function forkRepo(
+  repoUrl: string
+): Promise<{ forkOwner: string; forkRepo: string; forkUrl: string }> {
+  const pat = process.env.GITHUB_PAT;
+  if (!pat) {
+    throw new Error("GITHUB_PAT environment variable is not set");
+  }
+
+  const { owner, repo } = parseGitHubUrl(repoUrl);
+  const headers: Record<string, string> = {
+    Authorization: `token ${pat}`,
+    Accept: "application/vnd.github.v3+json",
+  };
+
+  const forkRes = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/forks`,
+    { method: "POST", headers }
+  );
+
+  if (!forkRes.ok && forkRes.status !== 202 && forkRes.status !== 422) {
+    const body = await forkRes.text();
+    throw new Error(
+      `Failed to fork repository (${forkRes.status}): ${body}`
+    );
+  }
+
+  const forkData = await forkRes.json();
+  const forkOwner: string = forkData.owner?.login ?? forkData.full_name?.split("/")[0];
+
+  if (!forkOwner) {
+    throw new Error("Could not determine fork owner from GitHub response");
+  }
+
+  for (let i = 0; i < FORK_POLL_MAX_ATTEMPTS; i++) {
+    const checkRes = await fetch(
+      `https://api.github.com/repos/${forkOwner}/${repo}`,
+      { headers }
+    );
+    if (checkRes.ok) {
+      return {
+        forkOwner,
+        forkRepo: repo,
+        forkUrl: `https://github.com/${forkOwner}/${repo}`,
+      };
+    }
+    await new Promise((resolve) => setTimeout(resolve, FORK_POLL_INTERVAL_MS));
+  }
+
+  throw new Error(
+    `Fork not ready after ${FORK_POLL_MAX_ATTEMPTS * FORK_POLL_INTERVAL_MS / 1000}s — try again later`
+  );
 }
 
 export async function fetchRepoFiles(
