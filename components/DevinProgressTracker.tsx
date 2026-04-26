@@ -27,6 +27,7 @@ export default function DevinProgressTracker({
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const startedAt = useRef(0);
   const mountedRef = useRef(true);
+  const consecutiveErrors = useRef(0);
   const onCompleteRef = useRef(onComplete);
   const onErrorRef = useRef(onError);
 
@@ -94,14 +95,18 @@ export default function DevinProgressTracker({
           onErrorRef.current?.(msg);
           return;
         }
+        consecutiveErrors.current = 0;
       } catch (err) {
         if (!mountedRef.current) return;
+        consecutiveErrors.current += 1;
         const msg = err instanceof Error ? err.message : "Failed to check status";
-        setErrorMessage(msg);
-        setSessionStatus("failed");
-        const elapsed = Math.floor((performance.now() - startedAt.current) / 1000);
-        setSteps(inferProgressSteps("failed", msg, elapsed));
-        onErrorRef.current?.(msg);
+        if (consecutiveErrors.current >= 3) {
+          setErrorMessage(msg);
+          setSessionStatus("failed");
+          const elapsed = Math.floor((performance.now() - startedAt.current) / 1000);
+          setSteps(inferProgressSteps("failed", msg, elapsed));
+          onErrorRef.current?.(msg);
+        }
       }
     };
 

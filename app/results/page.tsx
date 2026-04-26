@@ -44,6 +44,7 @@ export default function ResultsPage() {
     setImplementingApiName(api.name);
     setDevinError(null);
     setPrUrl(null);
+    setDevinSessionId(null);
     setStage("generating");
 
     try {
@@ -74,6 +75,8 @@ export default function ResultsPage() {
 
   const handleDevinError = (error: string) => {
     setDevinError(error);
+    setImplementingApiName(null);
+    setDevinSessionId(null);
     setStage("pr-failed");
   };
 
