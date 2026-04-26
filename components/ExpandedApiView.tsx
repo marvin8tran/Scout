@@ -27,6 +27,15 @@ const SCORE_LABELS: { key: keyof ScoredAPI["scores"]; label: string; color: stri
   { key: "maintenance", label: "Maintenance", color: "bg-rose-400" },
 ];
 
+const PRICING_FIELDS: { key: keyof ScoredAPI["pricing_details"]; label: string; icon: string }[] = [
+  { key: "free_tier", label: "Free Tier", icon: "🆓" },
+  { key: "paid_starting_price", label: "Starting Price", icon: "💰" },
+  { key: "rate_limit", label: "Rate Limit", icon: "⚡" },
+  { key: "monthly_capacity", label: "Monthly Capacity", icon: "📊" },
+  { key: "last_updated", label: "Last Updated", icon: "🕐" },
+  { key: "data_source", label: "Data Source", icon: "📋" },
+];
+
 export default function ExpandedApiView({
   api,
   priority,
@@ -138,11 +147,45 @@ export default function ExpandedApiView({
         ))}
       </motion.div>
 
+      {/* Pricing Details */}
+      {api.pricing_details && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-8"
+        >
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Key Details</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {PRICING_FIELDS.map(({ key, label, icon }) => {
+              const value = api.pricing_details[key];
+              if (!value) return null;
+              return (
+                <div
+                  key={key}
+                  className="flex items-start gap-3 px-4 py-3 rounded-xl bg-indigo-50/60 border border-indigo-100"
+                >
+                  <span className="text-base shrink-0">{icon}</span>
+                  <div className="min-w-0">
+                    <div className="text-xs uppercase tracking-wide text-gray-400 font-medium">
+                      {label}
+                    </div>
+                    <div className="text-sm font-semibold text-gray-800">
+                      {value}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
       {/* Winner Reason */}
       <motion.p
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.25 }}
         className="text-gray-700 mb-4 leading-relaxed"
       >
         {api.winner_reason}
@@ -152,7 +195,7 @@ export default function ExpandedApiView({
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
+        transition={{ delay: 0.3 }}
         className="flex items-start gap-2 px-4 py-3 rounded-xl bg-amber-50/80 border border-amber-200 mb-8"
       >
         <span className="text-amber-600 text-sm font-semibold shrink-0 mt-0.5">
