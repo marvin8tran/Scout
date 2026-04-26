@@ -59,10 +59,18 @@ export async function validateGitHubRepoExists(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
 
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github.v3+json",
+  };
+  const pat = process.env.GITHUB_PAT;
+  if (pat) {
+    headers["Authorization"] = `token ${pat}`;
+  }
+
   try {
     const res = await fetch(
       `https://api.github.com/repos/${owner}/${repo}`,
-      { method: "HEAD", signal: controller.signal }
+      { method: "HEAD", headers, signal: controller.signal }
     );
 
     if (res.status === 200) return { exists: true };
@@ -70,7 +78,12 @@ export async function validateGitHubRepoExists(
       return { exists: false, error: "Repository not found — make sure it exists and is public" };
     }
     if (res.status === 403) {
-      return { exists: false, error: "Repository is not accessible — it may be private" };
+      return {
+        exists: false,
+        error: pat
+          ? "Repository is not accessible — it may be private"
+          : "GitHub API rate limit reached — please try again later",
+      };
     }
     return { exists: false, error: "Could not reach GitHub to verify repository" };
   } catch {
