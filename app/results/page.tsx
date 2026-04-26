@@ -34,7 +34,7 @@ export default function ResultsPage() {
 
   useEffect(() => {
     if (!resultData) {
-      router.push("/");
+      router.push("/search");
     }
   }, [resultData, router]);
 
@@ -101,7 +101,7 @@ export default function ResultsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/search")}
             className="flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
