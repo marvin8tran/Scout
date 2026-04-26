@@ -69,11 +69,13 @@ api-scout/
 │   ├── InputPanel.tsx            # Chat-style input: source selection + chat message + priority pills
 │   ├── ResultCard.tsx            # Single API result card
 │   ├── ResultsList.tsx           # Top 3 results layout
-│   └── DevinStatus.tsx           # Devin integration progress & PR result
+│   ├── DevinStatus.tsx           # Simple Devin status badge (legacy, still used for fallback)
+│   └── DevinProgressTracker.tsx  # Step-by-step Devin progress with polling, timeline UI, timeout
 ├── lib/
 │   ├── gemini.ts                 # Gemini client singleton
 │   ├── exa.ts                    # Exa client singleton
-│   ├── devin.ts                  # Devin API client singleton
+│   ├── devin.ts                  # Devin API client (trigger + getSessionStatus)
+│   ├── devinProgress.ts          # Progress step inference from status/time/keywords
 │   ├── github.ts                 # GitHub fetch helpers
 │   └── prompts.ts                # ALL system prompts live here
 ├── types/
@@ -184,6 +186,23 @@ export interface DevinSessionStatus {
   status: "pending" | "running" | "completed" | "failed";
   message?: string;
   prUrl?: string;               // populated when Devin creates the PR from fork
+  url?: string;                 // Devin session URL for live watching
+}
+
+export interface DevinProgressStep {
+  label: string;
+  status: "pending" | "active" | "completed" | "failed";
+  timestamp?: number;
+}
+
+export interface DevinSessionProgress {
+  sessionId: string;
+  status: "pending" | "running" | "completed" | "failed" | "stopped";
+  statusMessage?: string;
+  url?: string;                 // Devin session URL
+  pullRequestUrl?: string;      // PR URL when completed
+  steps: DevinProgressStep[];
+  startedAt: number;            // epoch ms when session was triggered
 }
 ```
 
@@ -342,8 +361,9 @@ When in doubt, ask: *"Does this make the demo cleaner or more complex?"* If more
 6. Loading state shows pipeline steps: Analyzing → Searching → Scoring
 7. Top 3 cards appear with scores, reasoning, and a copy-able code snippet
 8. User clicks "Implement with Devin" on their preferred API *(GitHub mode only)* and optionally provides free-form implementation instructions (e.g., file placement, patterns, tests)
-9. Devin forks the repo under its own account, generates integration code in the fork, and opens a cross-repo PR back to the user's repo
-10. User sees the PR link and can review/merge on GitHub
+9. A real-time progress tracker appears showing Devin's steps: Forking → Analyzing → Installing → Creating code → Error handling → Committing → Opening PR
+10. Progress is polled every 5 seconds; steps are inferred from session status, keywords, and elapsed time
+11. On completion, user sees the PR link and can review/merge on GitHub; a "Watch live on Devin" link is also available during execution
 
 ---
 
