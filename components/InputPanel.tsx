@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { InputMode, PriorityMode, AnalyzeRequest } from "@/types";
+import type { PriorityMode, AnalyzeRequest } from "@/types";
 
 const PLACEHOLDER_EXAMPLES = [
   "authentication",
@@ -28,7 +28,6 @@ interface InputPanelProps {
 }
 
 export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
-  const [mode, setMode] = useState<InputMode | null>(null);
   const [input, setInput] = useState("");
   const [chatMessage, setChatMessage] = useState("");
   const [details, setDetails] = useState("");
@@ -62,11 +61,11 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
   };
 
   const handleSubmit = () => {
-    if (!chatMessage.trim() || !mode || !input.trim()) return;
+    if (!chatMessage.trim() || !input.trim()) return;
     const fullMessage = details.trim()
       ? `${chatMessage.trim()}. Additional details: ${details.trim()}`
       : chatMessage.trim();
-    onSubmit({ input: input.trim(), chatMessage: fullMessage, mode, priority });
+    onSubmit({ input: input.trim(), chatMessage: fullMessage, mode: "github", priority });
   };
 
   const showPlaceholder = !isFocused && chatMessage.length === 0;
@@ -122,7 +121,7 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
         {/* Submit button */}
         <button
           onClick={handleSubmit}
-          disabled={isLoading || !chatMessage.trim() || !mode || !input.trim()}
+          disabled={isLoading || !chatMessage.trim() || !input.trim()}
           className="mt-6 px-8 py-3 bg-indigo-600 text-white text-sm font-medium rounded-full hover:bg-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md"
         >
           {isLoading ? (
@@ -139,66 +138,21 @@ export default function InputPanel({ onSubmit, isLoading }: InputPanelProps) {
         </button>
       </div>
 
-      {/* Source Input Section */}
-      <div className="space-y-6">
+      {/* GitHub Repo Input */}
+      <div className="space-y-4">
         <p className="text-center text-sm text-gray-400 uppercase tracking-widest font-medium">
-          Provide your code context
+          Provide your GitHub repository
         </p>
 
-        {/* Mode Toggle */}
-        <div className="flex justify-center">
-          <div className="inline-flex rounded-full border border-gray-200 p-1 bg-gray-50">
-            <button
-              onClick={() => setMode("snippet")}
-              className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                mode === "snippet"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" />
-              </svg>
-              Code Snippet
-            </button>
-            <button
-              onClick={() => setMode("github")}
-              className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                mode === "github"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
-              </svg>
-              GitHub Link
-            </button>
-          </div>
+        <div className="max-w-2xl mx-auto">
+          <input
+            type="url"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="https://github.com/owner/repo"
+            className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 text-sm transition-all"
+          />
         </div>
-
-        {/* Source Input */}
-        {mode && (
-          <div className="max-w-2xl mx-auto">
-            {mode === "github" ? (
-              <input
-                type="url"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="https://github.com/owner/repo"
-                className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 text-sm transition-all"
-              />
-            ) : (
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Paste your code here..."
-                rows={5}
-                className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 text-sm resize-none font-mono transition-all"
-              />
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
