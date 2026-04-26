@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { inferProgressSteps } from "@/lib/devinProgress";
 import type { DevinProgressStep } from "@/types";
 
@@ -27,75 +27,82 @@ export default function DevinProgressTracker({
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const startedAt = useRef(0);
   const mountedRef = useRef(true);
+  const onCompleteRef = useRef(onComplete);
+  const onErrorRef = useRef(onError);
 
-  const poll = useCallback(async () => {
-    if (!mountedRef.current) return;
-    try {
-      const res = await fetch("/api/devin/status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId }),
-      });
-      if (!mountedRef.current) return;
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to check status");
-
-      const elapsed = Math.floor((performance.now() - startedAt.current) / 1000);
-      setElapsedSeconds(elapsed);
-      setSessionStatus(data.status);
-      if (data.url) setSessionUrl(data.url);
-
-      const newSteps = inferProgressSteps(data.status, data.message, elapsed);
-      setSteps(newSteps);
-
-      if (data.status === "completed") {
-        if (data.prUrl) {
-          setPrUrl(data.prUrl);
-          onComplete?.(data.prUrl);
-        }
-        return;
-      }
-
-      if (data.status === "failed") {
-        const msg = data.message || "Devin session failed";
-        setErrorMessage(msg);
-        onError?.(msg);
-        return;
-      }
-    } catch (err) {
-      if (!mountedRef.current) return;
-      const msg = err instanceof Error ? err.message : "Failed to check status";
-      setErrorMessage(msg);
-      setSessionStatus("failed");
-      setSteps(inferProgressSteps("failed", msg, elapsedSeconds));
-      onError?.(msg);
-    }
-  }, [sessionId, elapsedSeconds, onComplete, onError]);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+    onErrorRef.current = onError;
+  }, [onComplete, onError]);
 
   useEffect(() => {
     mountedRef.current = true;
     startedAt.current = performance.now();
 
-    const interval = setInterval(() => {
+    const timerInterval = setInterval(() => {
       setElapsedSeconds(Math.floor((performance.now() - startedAt.current) / 1000));
     }, 1000);
 
     return () => {
       mountedRef.current = false;
-      clearInterval(interval);
+      clearInterval(timerInterval);
     };
   }, []);
 
   useEffect(() => {
     if (sessionStatus === "completed" || sessionStatus === "failed") return;
 
-    const pollInterval =
-      sessionStatus === "pending" ? 10000 : 5000;
+    const pollInterval = sessionStatus === "pending" ? 10000 : 5000;
 
-    poll();
-    const id = setInterval(poll, pollInterval);
+    const doPoll = async () => {
+      if (!mountedRef.current) return;
+      try {
+        const res = await fetch("/api/devin/status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+        if (!mountedRef.current) return;
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to check status");
+
+        const elapsed = Math.floor((performance.now() - startedAt.current) / 1000);
+        setElapsedSeconds(elapsed);
+        setSessionStatus(data.status);
+        if (data.url) setSessionUrl(data.url);
+
+        const newSteps = inferProgressSteps(data.status, data.message, elapsed);
+        setSteps(newSteps);
+
+        if (data.status === "completed") {
+          if (data.prUrl) {
+            setPrUrl(data.prUrl);
+            onCompleteRef.current?.(data.prUrl);
+          }
+          return;
+        }
+
+        if (data.status === "failed") {
+          const msg = data.message || "Devin session failed";
+          setErrorMessage(msg);
+          onErrorRef.current?.(msg);
+          return;
+        }
+      } catch (err) {
+        if (!mountedRef.current) return;
+        const msg = err instanceof Error ? err.message : "Failed to check status";
+        setErrorMessage(msg);
+        setSessionStatus("failed");
+        const elapsed = Math.floor((performance.now() - startedAt.current) / 1000);
+        setSteps(inferProgressSteps("failed", msg, elapsed));
+        onErrorRef.current?.(msg);
+      }
+    };
+
+    doPoll();
+    const id = setInterval(doPoll, pollInterval);
     return () => clearInterval(id);
-  }, [sessionStatus, poll]);
+  }, [sessionId, sessionStatus]);
 
   const timedOut = elapsedSeconds >= 600;
 

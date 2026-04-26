@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ResultsList from "@/components/ResultsList";
-import DevinProgressTracker from "@/components/DevinProgressTracker";
 import type { ScoutResult, ScoredAPI, PriorityMode, InputMode } from "@/types";
 
 type Stage =
@@ -125,18 +124,6 @@ export default function ResultsPage() {
           onDevinComplete={handleDevinComplete}
           onDevinError={handleDevinError}
         />
-
-        {/* Devin Progress Tracker — shown below results when session active */}
-        {stage === "generating" && devinSessionId && implementingApiName && (
-          <div className="mt-8 max-w-2xl mx-auto">
-            <DevinProgressTracker
-              sessionId={devinSessionId}
-              apiName={implementingApiName}
-              onComplete={handleDevinComplete}
-              onError={handleDevinError}
-            />
-          </div>
-        )}
 
         {/* Completed: show PR link */}
         {stage === "pr-done" && prUrl && implementingApiName && (
