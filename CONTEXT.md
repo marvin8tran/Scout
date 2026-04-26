@@ -176,6 +176,7 @@ export interface DevinTriggerRequest {
   repoUrl: string;              // user's public GitHub repo URL
   selectedAPI: ScoredAPI;       // the API they chose to implement
   intent: ExtractedIntent;      // the extracted intent from the analyze step
+  developerContext?: string;    // optional free-form implementation instructions from the developer
 }
 
 export interface DevinSessionStatus {
@@ -216,7 +217,7 @@ export interface DevinSessionStatus {
 Max 3 files. Never fetch the whole repo.
 
 ### POST `/api/devin/trigger`
-**Input:** `{ repoUrl: string, selectedAPI: ScoredAPI, intent: ExtractedIntent }`
+**Input:** `{ repoUrl: string, selectedAPI: ScoredAPI, intent: ExtractedIntent, developerContext?: string }`
 **Output:** `{ sessionId: string }`
 **What it does:** Parses the GitHub URL to extract `owner/repo`, builds a structured prompt via `buildDevinSessionPrompt()` (which now accepts `repoOwner` and `repoName`), and triggers a Devin session. The prompt explicitly instructs Devin to **fork** the repo under its own account, work in the fork, and open a **cross-repo pull request** back to the original repo. Devin never pushes directly to the user's repository.
 
@@ -340,7 +341,7 @@ When in doubt, ask: *"Does this make the demo cleaner or more complex?"* If more
 5. They hit the send button (or press Enter)
 6. Loading state shows pipeline steps: Analyzing → Searching → Scoring
 7. Top 3 cards appear with scores, reasoning, and a copy-able code snippet
-8. User clicks "Implement with Devin" on their preferred API *(GitHub mode only)*
+8. User clicks "Implement with Devin" on their preferred API *(GitHub mode only)* and optionally provides free-form implementation instructions (e.g., file placement, patterns, tests)
 9. Devin forks the repo under its own account, generates integration code in the fork, and opens a cross-repo PR back to the user's repo
 10. User sees the PR link and can review/merge on GitHub
 

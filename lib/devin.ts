@@ -50,6 +50,7 @@ export async function triggerDevinSession(
     language: request.intent.language,
     framework: request.intent.framework,
     task: request.intent.task,
+    developerContext: request.developerContext,
   });
 
   const res = await fetch(

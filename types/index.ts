@@ -67,6 +67,7 @@ export interface DevinTriggerRequest {
   repoUrl: string;
   selectedAPI: ScoredAPI;
   intent: ExtractedIntent;
+  developerContext?: string;
 }
 
 export interface DevinSessionStatus {
