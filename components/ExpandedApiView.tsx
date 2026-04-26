@@ -91,22 +91,22 @@ export default function ExpandedApiView({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="flex items-start justify-between mb-8"
+        className="flex items-start justify-between gap-4 mb-8"
       >
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900">
+        <div className="min-w-0">
+          <h2 className="text-3xl font-bold text-gray-900 truncate">
             {api.name}
           </h2>
           <a
             href={api.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-indigo-400 hover:text-indigo-600 hover:underline transition-colors"
+            className="text-sm text-indigo-400 hover:text-indigo-600 hover:underline transition-colors block truncate"
           >
             {api.url}
           </a>
         </div>
-        <div className="text-right">
+        <div className="text-right shrink-0">
           <div className="text-4xl font-bold text-gray-900">
             {api.final_score.toFixed(1)}
           </div>
