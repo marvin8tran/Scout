@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import TypingAnimation from "@/components/TypingAnimation";
-import SponsorCarousel from "@/components/SponsorCarousel";
 import { getArticle } from "@/lib/grammar";
 
 const WORDS = [
@@ -50,6 +49,8 @@ const STEPS = [
     exampleType: null,
   },
 ];
+
+const SPONSORS = ["Cognition AI", "Exa", "Gemini", "Monster Energy"];
 
 export default function HomePage() {
   const [article, setArticle] = useState<"a" | "an">("a");
@@ -140,10 +141,21 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Sponsors */}
+        <section className="w-full max-w-4xl mx-auto py-10 border-t border-gray-100 text-center">
+          <p className="text-xs text-gray-400 mb-3">Powered by</p>
+          <div className="flex items-center justify-center gap-6 flex-wrap">
+            {SPONSORS.map((name) => (
+              <span
+                key={name}
+                className="text-sm font-medium text-gray-400"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        </section>
       </main>
-
-      {/* Sponsors */}
-      <SponsorCarousel />
 
       {/* Footer */}
       <footer className="py-8 text-center relative z-10">
