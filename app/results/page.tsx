@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ResultsList from "@/components/ResultsList";
-import DevinStatus from "@/components/DevinStatus";
+import DevinProgressTracker from "@/components/DevinProgressTracker";
 import type { ScoutResult, ScoredAPI, PriorityMode, InputMode } from "@/types";
 
 type Stage =
@@ -32,7 +32,6 @@ export default function ResultsPage() {
   const [devinSessionId, setDevinSessionId] = useState<string | null>(null);
   const [prUrl, setPrUrl] = useState<string | null>(null);
   const [devinError, setDevinError] = useState<string | null>(null);
-  const pollGenerationRef = useRef(0);
 
   useEffect(() => {
     if (!resultData) {
@@ -45,8 +44,8 @@ export default function ResultsPage() {
 
     setImplementingApiName(api.name);
     setDevinError(null);
+    setPrUrl(null);
     setStage("generating");
-    const generation = ++pollGenerationRef.current;
 
     try {
       const triggerRes = await fetch("/api/devin/trigger", {
@@ -61,39 +60,7 @@ export default function ResultsPage() {
       });
       const triggerData = await triggerRes.json();
       if (!triggerRes.ok) throw new Error(triggerData.error || "Failed to trigger Devin session");
-      const { sessionId } = triggerData;
-      setDevinSessionId(sessionId);
-
-      const poll = async () => {
-        if (pollGenerationRef.current !== generation) return;
-        try {
-          const statusRes = await fetch("/api/devin/status", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sessionId }),
-          });
-          const status = await statusRes.json();
-          if (!statusRes.ok) throw new Error(status.error || "Failed to check session status");
-          if (pollGenerationRef.current !== generation) return;
-
-          if (status.status === "completed") {
-            setPrUrl(status.prUrl ?? null);
-            setStage("pr-done");
-          } else if (status.status === "failed") {
-            setDevinError(status.message || "Devin session failed");
-            setStage("pr-failed");
-          } else {
-            setTimeout(poll, 10000);
-          }
-        } catch (pollErr) {
-          if (pollGenerationRef.current !== generation) return;
-          console.error("Devin poll error:", pollErr);
-          setDevinError(pollErr instanceof Error ? pollErr.message : "Failed to check session status");
-          setStage("pr-failed");
-        }
-      };
-
-      setTimeout(poll, 10000);
+      setDevinSessionId(triggerData.sessionId);
     } catch (err) {
       console.error("Devin error:", err);
       setDevinError(err instanceof Error ? err.message : "Failed to generate integration");
@@ -101,7 +68,15 @@ export default function ResultsPage() {
     }
   };
 
-  void devinSessionId;
+  const handleDevinComplete = (url: string) => {
+    setPrUrl(url);
+    setStage("pr-done");
+  };
+
+  const handleDevinError = (error: string) => {
+    setDevinError(error);
+    setStage("pr-failed");
+  };
 
   if (!resultData) {
     return (
@@ -146,16 +121,50 @@ export default function ResultsPage() {
           onImplement={handleImplement}
           implementingApiName={implementingApiName}
           showImplementButton={resultData.inputMode === "github"}
+          devinSessionId={devinSessionId}
+          onDevinComplete={handleDevinComplete}
+          onDevinError={handleDevinError}
         />
 
-        {(stage === "generating" || stage === "pr-done" || stage === "pr-failed") && implementingApiName && (
-          <div className="mt-8 max-w-4xl mx-auto">
-            <DevinStatus
-              status={stage}
+        {/* Devin Progress Tracker — shown below results when session active */}
+        {stage === "generating" && devinSessionId && implementingApiName && (
+          <div className="mt-8 max-w-2xl mx-auto">
+            <DevinProgressTracker
+              sessionId={devinSessionId}
               apiName={implementingApiName}
-              prUrl={prUrl ?? undefined}
-              errorMessage={stage === "pr-failed" ? devinError ?? undefined : undefined}
+              onComplete={handleDevinComplete}
+              onError={handleDevinError}
             />
+          </div>
+        )}
+
+        {/* Completed: show PR link */}
+        {stage === "pr-done" && prUrl && implementingApiName && (
+          <div className="mt-8 max-w-2xl mx-auto p-6 rounded-xl border border-emerald-100 bg-emerald-50">
+            <p className="text-sm text-emerald-700 mb-3">
+              Devin created a pull request for{" "}
+              <span className="font-medium">{implementingApiName}</span>!
+            </p>
+            <a
+              href={prUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
+            >
+              View Pull Request
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-4.5-4.5L21 3m0 0h-5.25M21 3v5.25" />
+              </svg>
+            </a>
+          </div>
+        )}
+
+        {/* Failed state */}
+        {stage === "pr-failed" && (
+          <div className="mt-8 max-w-2xl mx-auto p-6 rounded-xl border border-red-100 bg-red-50">
+            <p className="text-sm text-red-700">
+              {devinError || "Failed to generate integration. Please try again."}
+            </p>
           </div>
         )}
       </main>

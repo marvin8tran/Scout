@@ -14,6 +14,9 @@ interface ResultsListProps {
   onImplement?: (api: ScoredAPI, developerContext?: string) => void;
   implementingApiName?: string | null;
   showImplementButton?: boolean;
+  devinSessionId?: string | null;
+  onDevinComplete?: (prUrl: string) => void;
+  onDevinError?: (error: string) => void;
 }
 
 export default function ResultsList({
@@ -24,6 +27,9 @@ export default function ResultsList({
   onImplement,
   implementingApiName,
   showImplementButton,
+  devinSessionId,
+  onDevinComplete,
+  onDevinError,
 }: ResultsListProps) {
   const [selectedApi, setSelectedApi] = useState<ScoredAPI | null>(null);
 
@@ -122,6 +128,11 @@ export default function ResultsList({
               isImplementing={selectedApi.name === implementingApiName}
               isAnyImplementing={implementingApiName != null}
               showImplementButton={showImplementButton}
+              devinSessionId={
+                selectedApi.name === implementingApiName ? devinSessionId ?? undefined : undefined
+              }
+              onDevinComplete={onDevinComplete}
+              onDevinError={onDevinError}
             />
           </motion.div>
         )}

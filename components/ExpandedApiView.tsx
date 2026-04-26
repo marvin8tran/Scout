@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import type { ScoredAPI, PriorityMode } from "@/types";
+import DevinProgressTracker from "./DevinProgressTracker";
 
 const PRIORITY_SCORE_KEY: Record<PriorityMode, keyof ScoredAPI["scores"]> = {
   scalability: "scalability",
@@ -18,6 +19,9 @@ interface ExpandedApiViewProps {
   isImplementing?: boolean;
   isAnyImplementing?: boolean;
   showImplementButton?: boolean;
+  devinSessionId?: string;
+  onDevinComplete?: (prUrl: string) => void;
+  onDevinError?: (error: string) => void;
 }
 
 const SCORE_LABELS: { key: keyof ScoredAPI["scores"]; label: string; color: string }[] = [
@@ -44,6 +48,9 @@ export default function ExpandedApiView({
   isImplementing,
   isAnyImplementing,
   showImplementButton,
+  devinSessionId,
+  onDevinComplete,
+  onDevinError,
 }: ExpandedApiViewProps) {
   const [copied, setCopied] = useState(false);
   const [showContextInput, setShowContextInput] = useState(false);
@@ -235,22 +242,22 @@ export default function ExpandedApiView({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
-          className="mt-6 space-y-3"
+          className="mt-6 space-y-4"
         >
-          {!showContextInput ? (
+          {isImplementing && devinSessionId ? (
+            <DevinProgressTracker
+              sessionId={devinSessionId}
+              apiName={api.name}
+              onComplete={onDevinComplete}
+              onError={onDevinError}
+            />
+          ) : !showContextInput ? (
             <button
               onClick={() => setShowContextInput(true)}
               disabled={isAnyImplementing}
               className="w-full px-4 py-3 rounded-xl bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {isImplementing ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Devin is working...
-                </>
-              ) : (
-                "Implement with Devin"
-              )}
+              Implement with Devin
             </button>
           ) : (
             <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 space-y-3">
@@ -292,7 +299,7 @@ export default function ExpandedApiView({
                 </div>
               </div>
             </div>
-          )}
+          )
         </motion.div>
       )}
     </motion.div>

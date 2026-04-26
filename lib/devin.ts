@@ -115,11 +115,14 @@ export async function getSessionStatus(
     (pr: { pr_url: string }) => pr.pr_url
   );
 
+  const sessionUrl = data.url || undefined;
+
   if (data.status === "error") {
     return {
       sessionId,
       status: "failed",
       message: "Devin session encountered an error",
+      url: sessionUrl,
     };
   }
 
@@ -131,6 +134,7 @@ export async function getSessionStatus(
       sessionId,
       status: "completed",
       prUrl: prEntry?.pr_url,
+      url: sessionUrl,
     };
   }
 
@@ -139,11 +143,13 @@ export async function getSessionStatus(
       sessionId,
       status: "running",
       message: data.status_detail || "Devin is working...",
+      url: sessionUrl,
     };
   }
 
   return {
     sessionId,
     status: "pending",
+    url: sessionUrl,
   };
 }

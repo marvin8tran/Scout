@@ -75,4 +75,21 @@ export interface DevinSessionStatus {
   status: "pending" | "running" | "completed" | "failed";
   message?: string;
   prUrl?: string;
+  url?: string;
+}
+
+export interface DevinProgressStep {
+  label: string;
+  status: "pending" | "active" | "completed" | "failed";
+  timestamp?: number;
+}
+
+export interface DevinSessionProgress {
+  sessionId: string;
+  status: "pending" | "running" | "completed" | "failed" | "stopped";
+  statusMessage?: string;
+  url?: string;
+  pullRequestUrl?: string;
+  steps: DevinProgressStep[];
+  startedAt: number;
 }
